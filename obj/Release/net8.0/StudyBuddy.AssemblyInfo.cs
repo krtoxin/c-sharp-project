@@ -11,12 +11,11 @@
 using System;
 using System.Reflection;
 
-[assembly: Microsoft.AspNetCore.Identity.UI.UIFrameworkAttribute("Bootstrap5")]
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("aspnet-StudyBuddy-b853e70d-1b9f-477f-a9e1-0517aa690d19")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("StudyBuddy")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+156631ccf2d9867129c47c1039a1e38fb77e0d5b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e2c5f324094eaa117d72b6d61d87b31611140e9e")]
 [assembly: System.Reflection.AssemblyProductAttribute("StudyBuddy")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StudyBuddy")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
