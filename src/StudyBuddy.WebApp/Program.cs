@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StudyBuddy.Data;
+using StudyBuddy.WebApp.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
