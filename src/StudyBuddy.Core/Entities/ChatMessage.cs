@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StudyBuddy.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,5 +22,8 @@ namespace StudyBuddy.Core.Entities
 
         public int ChatRoomId { get; set; }
         public ChatRoom ChatRoom { get; set; }
+
+        public AttachmentType AttachmentType { get; set; } = AttachmentType.None;
+        public string? AttachmentUrl { get; set; }
     }
 }
