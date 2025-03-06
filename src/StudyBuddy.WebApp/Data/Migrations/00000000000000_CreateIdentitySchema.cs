@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace StudyBuddy.Data.Migrations
+namespace StudyBuddy.WebApp.Data.Migrations
 {
     public partial class CreateIdentitySchema : Migration
     {

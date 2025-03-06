@@ -1,4 +1,4 @@
-namespace StudyBuddy.Models
+namespace StudyBuddy.WebApp.Models
 {
     public class ErrorViewModel
     {

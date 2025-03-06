@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace StudyBuddy.Data;
+namespace StudyBuddy.WebApp.Data;
 
 public class ApplicationDbContext : IdentityDbContext
 {
