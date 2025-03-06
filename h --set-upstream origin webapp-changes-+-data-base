@@ -1,7 +1,0 @@
-[33mc54b022[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: Додано рішення, класи та бібліотеки
-[33mcec8633[m[33m ([m[1;31morigin/test[m[33m)[m HEAD@{1}: pull --progress --no-edit --no-stat --recurse-submodules=no origin: Fast-forward
-[33md22e045[m HEAD@{2}: commit: update
-[33mf1495f7[m HEAD@{3}: pull --progress --no-edit --no-stat --recurse-submodules=no origin: Fast-forward
-[33m4449fe6[m HEAD@{4}: commit: lalala
-[33m3d1160f[m HEAD@{5}: pull --progress --no-edit --no-stat --recurse-submodules=no origin: Fast-forward
-[33m5cf3915[m HEAD@{6}: clone: from https://github.com/oa-ek/net-project-2025-slonyari
