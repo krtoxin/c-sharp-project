@@ -1,25 +1,32 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StudyBuddy.WebApp.Data;
-using StudyBuddy.Core.Hubs; 
+using StudyBuddy.Core.Data;
+using StudyBuddy.Core.Entities;
+using StudyBuddy.Repositories.Interfaces;
+using StudyBuddy.Repositories.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-    options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddDefaultIdentity<User>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddSignalR(); 
 
-var app = builder.Build(); 
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope()) 
+{
+    var services = scope.ServiceProvider;
+    await SeedData.Initialize(services);
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -36,9 +43,6 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Маппінг SignalR хабу
-app.MapHub<ChatHub>("/chatHub"); 
 
 app.MapControllerRoute(
     name: "default",
