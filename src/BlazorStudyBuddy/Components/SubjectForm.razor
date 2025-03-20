@@ -1,0 +1,21 @@
+﻿@code {
+    [Parameter] public EventCallback OnSave { get; set; }
+    private Subject Subject = new();
+
+    public void Edit(Subject subject)
+    {
+        Subject = subject;
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        if (Subject.Id == 0)
+            await SubjectService.AddSubjectAsync(Subject);
+        else
+            await SubjectService.UpdateSubjectAsync(Subject);
+
+        await OnSave.InvokeAsync();
+        Subject = new();
+    }
+}

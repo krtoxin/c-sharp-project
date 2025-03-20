@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudyBuddy.Core.Data;
-using StudyBuddy.Respositories.Interfaces;
+using StudyBuddy.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StudyBuddy.Respositories.Repositories
+namespace StudyBuddy.Repositories.Repositories
 {
     public class BaseRepository<T> : IBaseRepository<T> where T : class
     {

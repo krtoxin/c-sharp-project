@@ -1,0 +1,59 @@
+﻿@page "/users"
+@using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Services
+@inject UserService UserService
+
+<h3>Список користувачів</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Ім'я</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Users)
+        {
+            <tr>
+                <td>@user.FullName</td>
+                <td>@user.Email</td>
+                <td>@string.Join(", ", user.Roles)</td>
+                <td>
+                    <button class="btn btn-warning" @onclick="() => EditUser(user)">Редагувати</button>
+                    <button class="btn btn-danger" @onclick="() => DeleteUser(user.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<UserForm @ref="userForm" OnSave="LoadUsers" />
+
+@code {
+    private List<User> Users = new();
+    private UserForm userForm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        Users = (await UserService.GetAllUsersAsync()).ToList();
+    }
+
+    private void EditUser(User user)
+    {
+        userForm.Edit(user);
+    }
+
+    private async Task DeleteUser(string id)
+    {
+        await UserService.DeleteUserAsync(id);
+        await LoadUsers();
+    }
+}

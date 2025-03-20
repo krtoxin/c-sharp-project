@@ -1,14 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
-using StudyBuddy.Respositories.Interfaces;
+using StudyBuddy.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StudyBuddy.Respositories.Repositories
+namespace StudyBuddy.Repositories.Repositories
 {
     public class ChatRepository : BaseRepository<ChatRoom>, IChatRepository
     {

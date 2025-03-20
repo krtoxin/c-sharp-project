@@ -1,0 +1,58 @@
+﻿@page "/subjects"
+
+@using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Services
+@inject SubjectService SubjectService
+
+<h3>Список предметів</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Назва</th>
+            <th>Іконка</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var subject in Subjects)
+        {
+            <tr>
+                <td>@subject.Name</td>
+                <td><img src="@subject.Icon" width="30" /></td>
+                <td>
+                    <button class="btn btn-warning" @onclick="() => EditSubject(subject)">Редагувати</button>
+                    <button class="btn btn-danger" @onclick="() => DeleteSubject(subject.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<SubjectForm @ref="subjectForm" OnSave="LoadSubjects" />
+
+@code {
+    private List<Subject> Subjects = new();
+    private SubjectForm subjectForm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubjects();
+    }
+
+    private async Task LoadSubjects()
+    {
+        Subjects = (await SubjectService.GetSubjectsAsync()).ToList();
+    }
+
+    private void EditSubject(Subject subject)
+    {
+        subjectForm.Edit(subject);
+    }
+
+    private async Task DeleteSubject(int id)
+    {
+        await SubjectService.DeleteSubjectAsync(id);
+        await LoadSubjects();
+    }
+}
