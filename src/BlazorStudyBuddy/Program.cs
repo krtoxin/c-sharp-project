@@ -1,10 +1,9 @@
-﻿using System;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
 using StudyBuddy.Repositories.Repositories;
+using StudyBuddyWebBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,23 +17,23 @@ builder.Services.AddDefaultIdentity<User>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
 
-builder.Services.AddControllersWithViews();
+//builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+//builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<SubjectService>();
+builder.Services.AddScoped<SubTopicService>();
+builder.Services.AddScoped<StudyTaskService>();
+builder.Services.AddScoped<UserService>();
+
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope()) 
+if (!app.Environment.IsDevelopment())
 {
-    var services = scope.ServiceProvider;
-    await SeedData.Initialize(services);
-}
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseMigrationsEndPoint();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
@@ -44,10 +43,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.MapRazorPages();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();

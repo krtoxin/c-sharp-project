@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using StudyBuddy.Core.Entities;
-using System;
 
 namespace StudyBuddy.Core.Data
 {
@@ -10,7 +9,7 @@ namespace StudyBuddy.Core.Data
     {
         public DbSet<Subject> Subjects { get; set; } = null!;
         public DbSet<SubTopic> SubTopics { get; set; } = null!;
-        public DbSet<StudyTask> Tasks { get; set; } = null!; // Перейменовано з Task
+        public DbSet<StudyTask> Tasks { get; set; } = null!;
         public DbSet<ChatRoom> ChatRooms { get; set; } = null!;
         public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
         public DbSet<UserProgress> UserProgresses { get; set; } = null!;

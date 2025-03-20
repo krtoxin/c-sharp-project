@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using StudyBuddy.Core.Entities;
 
-namespace StudyBuddy.Respositories.Interfaces
+namespace StudyBuddy.Repositories.Interfaces
 {
     public interface IChatRepository : IBaseRepository<ChatRoom>
     {

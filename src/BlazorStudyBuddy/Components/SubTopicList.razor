@@ -1,0 +1,75 @@
+﻿@page "/subtopics"
+@using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Services
+@inject SubTopicService SubTopicService
+@inject SubjectService SubjectService
+
+<h3>Список підтем</h3>
+
+<select @bind="SelectedSubjectId" class="form-select" @onchange="LoadSubTopics">
+    <option value="0">Оберіть предмет</option>
+    @foreach (var subject in Subjects)
+    {
+        <option value="@subject.Id">@subject.Name</option>
+    }
+</select>
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Назва</th>
+            <th>Опис</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var subTopic in SubTopics)
+        {
+            <tr>
+                <td>@subTopic.Title</td>
+                <td>@subTopic.Description</td>
+                <td>
+                    <button class="btn btn-warning" @onclick="() => EditSubTopic(subTopic)">Редагувати</button>
+                    <button class="btn btn-danger" @onclick="() => DeleteSubTopic(subTopic.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<SubTopicForm @ref="subTopicForm" OnSave="LoadSubTopics" />
+
+@code {
+    private List<Subject> Subjects = new();
+    private List<SubTopic> SubTopics = new();
+    private SubTopicForm subTopicForm;
+    private int SelectedSubjectId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Subjects = (await SubjectService.GetSubjectsAsync()).ToList();
+    }
+
+    private async Task LoadSubTopics()
+    {
+        if (SelectedSubjectId > 0)
+        {
+            SubTopics = (await SubTopicService.GetSubTopicsBySubjectAsync(SelectedSubjectId)).ToList();
+        }
+        else
+        {
+            SubTopics.Clear();
+        }
+    }
+
+    private void EditSubTopic(SubTopic subTopic)
+    {
+        subTopicForm.Edit(subTopic);
+    }
+
+    private async Task DeleteSubTopic(int id)
+    {
+        await SubTopicService.DeleteSubTopicAsync(id);
+        await LoadSubTopics();
+    }
+}

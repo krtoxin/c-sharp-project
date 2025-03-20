@@ -1,0 +1,75 @@
+﻿@page "/tasks"
+@using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Services
+@inject StudyTaskService StudyTaskService
+@inject SubTopicService SubTopicService
+
+<h3>Список завдань</h3>
+
+<select @bind="SelectedSubTopicId" class="form-select" @onchange="LoadTasks">
+    <option value="0">Оберіть підтему</option>
+    @foreach (var subTopic in SubTopics)
+    {
+        <option value="@subTopic.Id">@subTopic.Title</option>
+    }
+</select>
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Питання</th>
+            <th>Правильна відповідь</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var task in StudyTasks)
+        {
+            <tr>
+                <td>@task.Question</td>
+                <td>@task.CorrectAnswer</td>
+                <td>
+                    <button class="btn btn-warning" @onclick="() => EditTask(task)">Редагувати</button>
+                    <button class="btn btn-danger" @onclick="() => DeleteTask(task.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<StudyTaskForm @ref="studyTaskForm" OnSave="LoadTasks" />
+
+@code {
+    private List<SubTopic> SubTopics = new();
+    private List<StudyTask> StudyTasks = new();
+    private StudyTaskForm studyTaskForm;
+    private int SelectedSubTopicId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SubTopics = (await SubTopicService.GetAllSubTopicsAsync()).ToList();
+    }
+
+    private async Task LoadTasks()
+    {
+        if (SelectedSubTopicId > 0)
+        {
+            StudyTasks = (await StudyTaskService.GetTasksBySubtopicAsync(SelectedSubTopicId)).ToList();
+        }
+        else
+        {
+            StudyTasks.Clear();
+        }
+    }
+
+    private void EditTask(StudyTask task)
+    {
+        studyTaskForm.Edit(task);
+    }
+
+    private async Task DeleteTask(int id)
+    {
+        await StudyTaskService.DeleteTaskAsync(id);
+        await LoadTasks();
+    }
+}

@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StudyBuddy.Respositories.Interfaces
+namespace StudyBuddy.Repositories.Interfaces
 {
     public interface IBaseRepository<T> where T : class
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StudyBuddy.Respositories.Interfaces
+namespace StudyBuddy.Repositories.Interfaces
 {
     public interface IProgressRepository : IBaseRepository<UserProgress>
     {
