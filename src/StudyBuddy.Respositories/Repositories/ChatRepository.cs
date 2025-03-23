@@ -2,11 +2,6 @@
 using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StudyBuddy.Repositories.Repositories
 {

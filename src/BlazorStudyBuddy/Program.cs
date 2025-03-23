@@ -1,14 +1,10 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
 using StudyBuddy.Repositories.Repositories;
 using StudyBuddyWebBlazor.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.UI;
 
 
 var builder = WebApplication.CreateBuilder(args);
