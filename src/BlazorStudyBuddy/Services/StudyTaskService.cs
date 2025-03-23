@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudyBuddy.Core.Entities;
 using StudyBuddy.Core.Data;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using StudyBuddy.Core.Entities;
 
 namespace StudyBuddyWebBlazor.Services
 {

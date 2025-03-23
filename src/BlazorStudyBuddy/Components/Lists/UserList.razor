@@ -1,5 +1,6 @@
 ﻿@page "/users"
 @using StudyBuddy.Core.DTOs
+@using StudyBuddyWebBlazor.Components.Forms
 @using StudyBuddyWebBlazor.Services
 @inject UserService UserService
 
@@ -34,7 +35,7 @@
 
 @code {
     private List<UserWithRolesDto> Users = new();
-    private UserForm userForm;
+    private Forms.UserForm userForm;
 
     protected override async Task OnInitializedAsync()
     {

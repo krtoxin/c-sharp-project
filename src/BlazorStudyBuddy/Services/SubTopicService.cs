@@ -1,5 +1,4 @@
 ﻿using StudyBuddy.Core.Entities;
-using System.Net.Http.Json;
 
 namespace StudyBuddyWebBlazor.Services
 {
