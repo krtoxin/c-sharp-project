@@ -1,9 +1,15 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Builder;
 using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
 using StudyBuddy.Repositories.Repositories;
 using StudyBuddyWebBlazor.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,14 +23,18 @@ builder.Services.AddDefaultIdentity<User>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
 
-//builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
-//builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<SubjectService>();
 builder.Services.AddScoped<SubTopicService>();
 builder.Services.AddScoped<StudyTaskService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<StudyTaskService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
+
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

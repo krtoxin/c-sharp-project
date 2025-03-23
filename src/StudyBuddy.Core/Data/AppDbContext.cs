@@ -13,6 +13,7 @@ namespace StudyBuddy.Core.Data
         public DbSet<ChatRoom> ChatRooms { get; set; } = null!;
         public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
         public DbSet<UserProgress> UserProgresses { get; set; } = null!;
+        public DbSet<StudyTask> StudyTasks { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

@@ -1,5 +1,5 @@
 ﻿@page "/users"
-@using StudyBuddy.Core.Entities
+@using StudyBuddy.Core.DTOs
 @using StudyBuddyWebBlazor.Services
 @inject UserService UserService
 
@@ -10,7 +10,7 @@
         <tr>
             <th>Ім'я</th>
             <th>Email</th>
-            <th>Роль</th>
+            <th>Ролі</th>
             <th>Дії</th>
         </tr>
     </thead>
@@ -20,7 +20,7 @@
             <tr>
                 <td>@user.FullName</td>
                 <td>@user.Email</td>
-                <td>@string.Join(", ", user.Roles)</td>
+                <td>@(user.Roles != null ? string.Join(", ", user.Roles) : "Немає ролей")</td>
                 <td>
                     <button class="btn btn-warning" @onclick="() => EditUser(user)">Редагувати</button>
                     <button class="btn btn-danger" @onclick="() => DeleteUser(user.Id)">Видалити</button>
@@ -33,7 +33,7 @@
 <UserForm @ref="userForm" OnSave="LoadUsers" />
 
 @code {
-    private List<User> Users = new();
+    private List<UserWithRolesDto> Users = new();
     private UserForm userForm;
 
     protected override async Task OnInitializedAsync()
@@ -43,12 +43,11 @@
 
     private async Task LoadUsers()
     {
-        Users = (await UserService.GetAllUsersAsync()).ToList();
+        Users = await UserService.GetAllUsersAsync();
     }
 
-    private void EditUser(User user)
+    private void EditUser(UserWithRolesDto user)
     {
-        userForm.Edit(user);
     }
 
     private async Task DeleteUser(string id)

@@ -1,12 +1,13 @@
 ﻿@page "/tasks"
 @using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Components.shared
 @using StudyBuddyWebBlazor.Services
 @inject StudyTaskService StudyTaskService
 @inject SubTopicService SubTopicService
 
 <h3>Список завдань</h3>
 
-<select @bind="SelectedSubTopicId" class="form-select" @onchange="LoadTasks">
+<select @bind="SelectedSubTopicId" @bind:after="LoadTasks" class="form-select">
     <option value="0">Оберіть підтему</option>
     @foreach (var subTopic in SubTopics)
     {
