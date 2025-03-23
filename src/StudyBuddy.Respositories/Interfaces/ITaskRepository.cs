@@ -7,8 +7,5 @@ using StudyBuddy.Core.Entities;
 
 namespace StudyBuddy.Repositories.Interfaces
 {
-    public interface ITaskRepository : IBaseRepository<StudyTask>
-    {
-        Task<IEnumerable<StudyTask>> GetTasksBySubtopicAsync(int subtopicId);
-    }
+    public interface ITaskRepository : IBaseRepository<StudyTask> { }
 }

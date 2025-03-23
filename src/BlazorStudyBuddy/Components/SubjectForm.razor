@@ -1,4 +1,7 @@
-﻿@code {
+﻿@using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Services
+@inject SubjectService SubjectService
+@code {
     [Parameter] public EventCallback OnSave { get; set; }
     private Subject Subject = new();
 

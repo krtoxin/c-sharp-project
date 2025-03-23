@@ -6,13 +6,7 @@
 
 <h3>Список підтем</h3>
 
-<select @bind="SelectedSubjectId" class="form-select" @onchange="LoadSubTopics">
-    <option value="0">Оберіть предмет</option>
-    @foreach (var subject in Subjects)
-    {
-        <option value="@subject.Id">@subject.Name</option>
-    }
-</select>
+<Component />
 
 <table class="table mt-3">
     <thead>

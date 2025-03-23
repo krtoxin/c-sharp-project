@@ -1,0 +1,31 @@
+﻿@using StudyBuddy.Core.Entities
+@code {
+    private User user = new User();
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    public void Edit(User selectedUser)
+    {
+        user = selectedUser;
+    }
+
+    private async Task SaveUser()
+    {
+        await OnSave.InvokeAsync();
+    }
+}
+
+<h3>Редагування користувача</h3>
+
+<form>
+    <div class="mb-3">
+        <label>Ім'я</label>
+        <input class="form-control" @bind="user.FullName" />
+    </div>
+    <div class="mb-3">
+        <label>Email</label>
+        <input class="form-control" @bind="user.Email" />
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="SaveUser">Зберегти</button>
+</form>

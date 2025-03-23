@@ -1,0 +1,20 @@
+﻿@using StudyBuddy.Core.Entities
+@code {
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    private SubTopic subTopic = new();
+
+    public void Edit(SubTopic subTopicToEdit)
+    {
+        subTopic = subTopicToEdit;
+    }
+
+    private async Task Save()
+    {
+        if (OnSave.HasDelegate)
+        {
+            await OnSave.InvokeAsync();
+        }
+    }
+}
