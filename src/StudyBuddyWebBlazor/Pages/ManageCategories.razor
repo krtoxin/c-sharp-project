@@ -1,0 +1,136 @@
+﻿@page "/manage-categories"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Repositories.Interfaces
+@inject ICategoryRepository CategoryRepository
+
+<h2>🗂️ Manage Categories & Subcategories</h2>
+
+<h4>📁 Category</h4>
+
+<EditForm Model="@categoryForm" OnValidSubmit="HandleCategorySave">
+    <DataAnnotationsValidator />
+    <div class="mb-2">
+        <InputText @bind-Value="categoryForm.Name" class="form-control" placeholder="Category name..." />
+    </div>
+
+    <div class="mb-2">
+        <label>Parent Category (optional)</label>
+        <select class="form-control" @bind="categoryForm.ParentCategoryId">
+            <option value="">-- None (Top-Level) --</option>
+            @foreach (var parent in categories.Where(c => c.Id != categoryForm.Id))  
+            {
+                <option value="@parent.Id">@parent.Name</option>
+            }
+        </select>
+    </div>
+
+    <button class="btn btn-success me-2" type="submit">@((isEdit ? "Update" : "Add") + " Category")</button>
+    @if (isEdit)
+    {
+        <button class="btn btn-secondary" @onclick="ResetForm">Cancel</button>
+    }
+</EditForm>
+
+@if (categories.Any())
+{
+    <h4 class="mt-4">📋 Category List</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Parent</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cat in categories)
+            {
+                <tr>
+                    <td>@cat.Name</td>
+                    <td>
+                        @(cat.ParentCategoryId.HasValue
+                            ? categories.FirstOrDefault(c => c.Id == cat.ParentCategoryId)?.Name
+                            : "—")
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-2" @onclick="() => Edit(cat)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(cat.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No categories added yet.</p>
+}
+
+@code {
+    private List<Category> categories = new();
+    private Category categoryForm = new() { Name = string.Empty };
+    private bool isEdit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        categories = (await CategoryRepository.GetAllAsync()).ToList();
+    }
+
+    private void Edit(Category cat)
+    {
+        categoryForm = new Category
+            {
+                Id = cat.Id,
+                Name = cat.Name,
+                ParentCategoryId = cat.ParentCategoryId
+            };
+        isEdit = true;
+    }
+
+    private async Task HandleCategorySave()
+    {
+        if (isEdit)
+        {
+            var existing = await CategoryRepository.GetByIdAsync(categoryForm.Id);
+            if (existing is not null)
+            {
+                existing.Name = categoryForm.Name;
+                existing.ParentCategoryId = categoryForm.ParentCategoryId;
+                await CategoryRepository.UpdateAsync(existing);
+            }
+        }
+        else
+        {
+            var newCat = new Category
+                {
+                    Name = categoryForm.Name,
+                    ParentCategoryId = categoryForm.ParentCategoryId
+                };
+            await CategoryRepository.AddAsync(newCat);
+        }
+
+        await LoadCategories();
+        ResetForm();
+    }
+
+    private async Task Delete(int id)
+    {
+        var existing = await CategoryRepository.GetByIdAsync(id);
+        if (existing is not null)
+        {
+            await CategoryRepository.DeleteAsync(existing);
+            await LoadCategories();
+        }
+    }
+
+    private void ResetForm()
+    {
+        categoryForm = new Category { Name = string.Empty };
+        isEdit = false;
+    }
+}

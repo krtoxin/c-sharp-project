@@ -1,0 +1,24 @@
+﻿@using StudyBuddy.Core.Entities
+@code {
+    [Parameter] public EventCallback OnSave { get; set; }
+
+    private StudyTask TaskModel = new()
+        {
+            Question = string.Empty,
+            CorrectAnswer = string.Empty
+        };
+
+    private bool IsEdit = false;
+
+    public void Edit(StudyTask task)
+    {
+        TaskModel = task;
+        IsEdit = true;
+    }
+
+    private async Task Save()
+    {
+        IsEdit = false;
+        await OnSave.InvokeAsync();
+    }
+}

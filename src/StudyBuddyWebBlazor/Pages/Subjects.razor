@@ -1,0 +1,145 @@
+﻿@page "/subjects"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Repositories.Interfaces
+@using StudyBuddy.Services.IServices
+@inject ISubjectService SubjectService
+@inject ICategoryRepository CategoryRepository
+
+<h2>📚 Subjects</h2>
+
+<button class="btn btn-primary mb-3" @onclick="ShowAddForm">➕ Add New Subject</button>
+
+@if (showForm)
+{
+    <EditForm Model="@subjectForm" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-2">
+            <label>Name:</label>
+            <InputText class="form-control" @bind-Value="subjectForm.Name" />
+        </div>
+
+        <div class="mb-2">
+            <label>Icon (emoji or text):</label>
+            <InputText class="form-control" @bind-Value="subjectForm.Icon" />
+        </div>
+
+        <div class="mb-3">
+            <label>Category:</label>
+            <select class="form-control" @bind="subjectForm.CategoryId">
+                <option disabled value="">-- Select Category --</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat.Id">@cat.Name</option>
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success me-2">Save</button>
+        <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
+
+@if (subjects == null)
+{
+    <p>Loading...</p>
+}
+else if (!subjects.Any())
+{
+    <p>No subjects found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Icon</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var subject in subjects)
+            {
+                <tr>
+                    <td>@subject.Name</td>
+                    <td>@subject.Icon</td>
+                    <td>@categories.FirstOrDefault(c => c.Id == subject.CategoryId)?.Name</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-2" @onclick="() => Edit(subject)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(subject.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Subject>? subjects;
+    private Subject subjectForm = new() { Name = string.Empty, Icon = string.Empty };
+    private bool showForm = false;
+    private bool isEdit = false;
+
+    private List<Category> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubjects();
+        await LoadCategories();
+    }
+
+    private async Task LoadSubjects()
+    {
+        subjects = (await SubjectService.GetAllAsync()).ToList();
+    }
+
+    private async Task LoadCategories()
+    {
+        categories = (await CategoryRepository.GetAllAsync()).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        subjectForm = new Subject { Name = string.Empty, Icon = string.Empty };
+        isEdit = false;
+        showForm = true;
+    }
+
+    private void Edit(Subject subject)
+    {
+        subjectForm = new Subject
+            {
+                Id = subject.Id,
+                Name = subject.Name,
+                Icon = subject.Icon,
+                CategoryId = subject.CategoryId
+            };
+        isEdit = true;
+        showForm = true;
+    }
+
+    private async Task HandleSave()
+    {
+        if (isEdit)
+            await SubjectService.UpdateAsync(subjectForm.Id, subjectForm);
+        else
+            await SubjectService.CreateAsync(subjectForm);
+
+        await LoadSubjects();
+        showForm = false;
+    }
+
+    private async Task Delete(int id)
+    {
+        await SubjectService.DeleteAsync(id);
+        await LoadSubjects();
+    }
+
+    private void Cancel()
+    {
+        showForm = false;
+    }
+}

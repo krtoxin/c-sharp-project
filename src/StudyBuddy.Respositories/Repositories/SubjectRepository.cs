@@ -1,4 +1,5 @@
-﻿using StudyBuddy.Core.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
 

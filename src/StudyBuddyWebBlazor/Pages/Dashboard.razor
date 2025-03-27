@@ -1,0 +1,29 @@
+﻿@page "/dashboard"
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<h2>Welcome to your Dashboard! 🎉</h2>
+
+<p>This is your personal space. From here you’ll manage your study subjects, tasks, and progress.</p>
+
+@if (!string.IsNullOrEmpty(UserName))
+{
+    <p>Hello, <strong>@UserName</strong> 👋</p>
+}
+else
+{
+    <p><em>Loading user info...</em></p>
+}
+
+@code {
+    private string? UserName;
+
+    protected override void OnInitialized()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            UserName = user.Identity.Name;
+        }
+    }
+}

@@ -1,0 +1,14 @@
+﻿@page "/home"
+@inject NavigationManager NavigationManager
+
+<h1 style="color:white;">Test Home Page</h1>
+
+<button @onclick="GoToLogin">Go to Login</button>
+
+@code {
+    private void GoToLogin()
+    {
+        Console.WriteLine("Button clicked");
+        NavigationManager.NavigateTo("/login");
+    }
+}

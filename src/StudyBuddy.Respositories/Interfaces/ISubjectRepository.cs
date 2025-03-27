@@ -2,5 +2,7 @@
 
 namespace StudyBuddy.Repositories.Interfaces
 {
-    public interface ISubjectRepository : IBaseRepository<Subject> { }
+    public interface ISubjectRepository : IBaseRepository<Subject>
+    {
+    }
 }

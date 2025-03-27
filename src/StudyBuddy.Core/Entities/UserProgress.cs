@@ -6,9 +6,9 @@
         public int CompletedTasks { get; set; }
 
         public string UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         public int SubTopicId { get; set; }
-        public SubTopic SubTopic { get; set; }
+        public SubTopic SubTopic { get; set; } = null!;
     }
 }
