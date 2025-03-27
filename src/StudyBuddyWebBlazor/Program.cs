@@ -10,6 +10,9 @@ using StudyBuddy.Services.IServices;
 using StudyBuddy.Services.Services;
 using StudyBuddyWebBlazor.Services;
 using Microsoft.AspNetCore.Identity;
+using StudyBuddy.Services.IServices;
+using StudyBuddy.Services.Services;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +42,9 @@ builder.Services.AddAuthentication(options => {
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
 
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IAuthService, StudyBuddy.Services.Services.AuthService>();

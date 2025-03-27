@@ -12,6 +12,7 @@ namespace StudyBuddy.Core.Data
         public DbSet<ChatRoom> ChatRooms { get; set; } = null!;
         public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
         public DbSet<UserProgress> UserProgresses { get; set; } = null!;
+        public DbSet<Category> Categories { get; set; } = null!;
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -20,7 +21,7 @@ namespace StudyBuddy.Core.Data
             base.OnModelCreating(builder);
 
             builder.Entity<UserSubject>()
-            .HasKey(us => new { us.UserId, us.SubjectId });
+                .HasKey(us => new { us.UserId, us.SubjectId });
 
             builder.Entity<ChatRoomMember>()
                 .HasKey(x => new { x.ChatRoomId, x.UserId });
@@ -36,8 +37,18 @@ namespace StudyBuddy.Core.Data
                 .WithOne(x => x.ChatRoom)
                 .HasForeignKey(x => x.ChatRoomId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Subject>()
+                .HasOne(s => s.Category)
+                .WithMany(c => c.Subjects)
+                .HasForeignKey(s => s.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Category>()
+                .HasOne(c => c.ParentCategory)
+                .WithMany(c => c.Subcategories)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
-
-
     }
 }

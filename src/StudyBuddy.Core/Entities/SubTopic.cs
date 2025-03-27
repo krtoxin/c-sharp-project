@@ -1,4 +1,10 @@
-﻿namespace StudyBuddy.Core.Entities
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace StudyBuddy.Core.Entities
 {
     public class SubTopic
     {
@@ -12,4 +18,5 @@
         public List<StudyTask> Tasks { get; set; } = new();
         public List<UserProgress> Progress { get; set; } = new();
     }
+
 }

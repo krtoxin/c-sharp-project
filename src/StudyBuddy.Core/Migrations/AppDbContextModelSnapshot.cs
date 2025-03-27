@@ -22,6 +22,28 @@ namespace StudyBuddy.Core.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ParentCategoryId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentCategoryId");
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("StudyBuddy.Core.Entities.ChatMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -174,6 +196,9 @@ namespace StudyBuddy.Core.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasColumnType("text");
@@ -183,6 +208,8 @@ namespace StudyBuddy.Core.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Subjects");
                 });
@@ -267,6 +294,16 @@ namespace StudyBuddy.Core.Migrations
                     b.ToTable("UserSubject");
                 });
 
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Category", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.Category", "ParentCategory")
+                        .WithMany("Subcategories")
+                        .HasForeignKey("ParentCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentCategory");
+                });
+
             modelBuilder.Entity("StudyBuddy.Core.Entities.ChatMessage", b =>
                 {
                     b.HasOne("StudyBuddy.Core.Entities.ChatRoom", "ChatRoom")
@@ -333,6 +370,16 @@ namespace StudyBuddy.Core.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Subject", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.Category", "Category")
+                        .WithMany("Subjects")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("StudyBuddy.Core.Entities.UserProgress", b =>
                 {
                     b.HasOne("StudyBuddy.Core.Entities.SubTopic", "SubTopic")
@@ -369,6 +416,13 @@ namespace StudyBuddy.Core.Migrations
                     b.Navigation("Subject");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Category", b =>
+                {
+                    b.Navigation("Subcategories");
+
+                    b.Navigation("Subjects");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.ChatRoom", b =>

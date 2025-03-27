@@ -2,7 +2,12 @@
 @code {
     [Parameter] public EventCallback OnSave { get; set; }
 
-    private StudyTask TaskModel = new();
+    private StudyTask TaskModel = new()
+        {
+            Question = string.Empty,
+            CorrectAnswer = string.Empty
+        };
+
     private bool IsEdit = false;
 
     public void Edit(StudyTask task)
