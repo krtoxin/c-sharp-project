@@ -1,25 +1,41 @@
-﻿@using Microsoft.AspNetCore.Components.Routing
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
-
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            @if (IsPublicPage(routeData.PageType))
+            {
+                <RouteView RouteData="@routeData" />
+            }
+            else
+            {
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <NotAuthorized>
+                        @if (!(context?.User?.Identity?.IsAuthenticated ?? false))
+                        {
+                            Navigation.NavigateTo("/login", true);
+                        }
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            }
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p>Сторінку не знайдено.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
 
 @code {
+    [CascadingParameter] private Task<AuthenticationState> context { get; set; }
     [Inject] NavigationManager Navigation { get; set; }
 
-    protected override void OnInitialized()
+    private bool IsPublicPage(Type pageType)
     {
-        if (Navigation.Uri == Navigation.BaseUri)
-        {
-            Navigation.NavigateTo("/home", true);
-        }
+        return pageType == typeof(StudyBuddyWebBlazor.Pages.Login) ||
+               pageType == typeof(StudyBuddyWebBlazor.Pages.Register);
     }
 }
+ 

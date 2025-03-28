@@ -1,6 +1,9 @@
 ﻿@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
+@attribute [Authorize]
+
 
 <h2>Welcome to your Dashboard! 🎉</h2>
 
