@@ -42,5 +42,17 @@ namespace StudyBuddyWebBlazor.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("/auth/external-login")]
+        public IActionResult ExternalLogin(string returnUrl = "/dashboard")
+        {
+            var props = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+            {
+                RedirectUri = returnUrl
+            };
+
+            return Challenge(props, Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme);
+        }
+
     }
 }

@@ -1,43 +1,40 @@
 ﻿@page "/login"
 @inject NavigationManager Navigation
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
-@using Microsoft.AspNetCore.Authentication.Google
-@inject IHttpContextAccessor HttpContextAccessor
 @using StudyBuddy.Core.DTOs
 @inject ApiUserService UserService
 
-<h3>🔐 Login</h3>
+<div class="login-wrapper">
+    <div class="login-container">
+        <img src="img/studylogo.svg" alt="StudyBuddy Logo" class="login-logo" />
+        <div class="login-card">
+            <h3 class="login-title">Login</h3>
 
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <div class="alert alert-danger">@ErrorMessage</div>
-}
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="error-message">@ErrorMessage</div>
+            }
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-    <div class="mb-3">
-        <label>Username or Email</label>
-        <InputText class="form-control" @bind-Value="loginModel.Identifier" />
+                <label class="login-label">Username or Email</label>
+                <InputText class="login-input" @bind-Value="loginModel.Identifier" placeholder="Enter username or email" />
+
+                <label class="login-label">Password</label>
+                <InputText type="password" class="login-input" @bind-Value="loginModel.Password" placeholder="Enter password" />
+
+                <button type="submit" class="login-button">Login</button>
+            </EditForm>
+
+            <button class="google-button" @onclick="LoginWithGoogle">Login with Google</button>
+
+            <div class="login-footer">
+                Don't have an account? <a href="/register">Register</a>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label>Password</label>
-        <InputText type="password" class="form-control" @bind-Value="loginModel.Password" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Login</button>
-</EditForm>
-
-<p class="mt-3">
-    <button class="btn btn-danger" @onclick="LoginWithGoogle">Login with Google</button>
-</p>
-
-<p>
-    Don't have an account? <a href="/register">Register</a>
-</p>
+</div>
 
 @code {
     private LoginDto loginModel = new();
@@ -56,10 +53,8 @@
         }
     }
 
-    private async Task LoginWithGoogle()
+    private void LoginWithGoogle()
     {
-        var redirectUrl = Navigation.BaseUri.TrimEnd('/') + "/dashboard";
-        var props = new AuthenticationProperties { RedirectUri = redirectUrl };
-        await HttpContextAccessor.HttpContext!.ChallengeAsync(GoogleDefaults.AuthenticationScheme, props);
+        Navigation.NavigateTo("/auth/external-login", true);
     }
 }

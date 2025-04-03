@@ -5,44 +5,40 @@
 @inject ApiUserService UserService
 @inject NavigationManager NavigationManager
 
-<div class="register-container">
-    <div class="register-box">
-        <h2>Create Account</h2>
+<div class="login-wrapper">
+    <div class="login-container">
+        <img src="img/studylogo.svg" alt="StudyBuddy Logo" class="login-logo" />
 
-        @if (!string.IsNullOrEmpty(ErrorMessage))
-        {
-            <div class="error">@ErrorMessage</div>
-        }
+        <div class="login-card">
+            <h3 class="login-title">Create Account</h3>
 
-        <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="error-message">@ErrorMessage</div>
+            }
 
-            <div class="mb-3">
-                <label>Full Name</label>
-                <InputText @bind-Value="registerModel.FullName" class="form-control" />
+            <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <label class="login-label">Full Name</label>
+                <InputText @bind-Value="registerModel.FullName" class="login-input" placeholder="Enter your full name" />
+
+                <label class="login-label">Username</label>
+                <InputText @bind-Value="registerModel.UserName" class="login-input" placeholder="Choose a username" />
+
+                <label class="login-label">Email</label>
+                <InputText @bind-Value="registerModel.Email" class="login-input" placeholder="Enter your email" />
+
+                <label class="login-label">Password</label>
+                <InputText @bind-Value="registerModel.Password" type="password" class="login-input" placeholder="Choose a password" />
+
+                <button type="submit" class="login-button">Register</button>
+            </EditForm>
+
+            <div class="login-footer">
+                Already have an account? <a href="/login">Login</a>
             </div>
-
-            <div class="mb-3">
-                <label>Username</label>
-                <InputText @bind-Value="registerModel.UserName" class="form-control" />
-            </div>
-
-            <div class="mb-3">
-                <label>Email</label>
-                <InputText @bind-Value="registerModel.Email" class="form-control" />
-            </div>
-
-            <div class="mb-3">
-                <label>Password</label>
-                <InputText @bind-Value="registerModel.Password" type="password" class="form-control" />
-            </div>
-
-            <button type="submit" class="btn-register">Register</button>
-        </EditForm>
-
-        <div class="login-link">
-            Already have an account? <a href="/login">Login</a>
         </div>
     </div>
 </div>
