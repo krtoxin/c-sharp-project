@@ -16,8 +16,7 @@
             <NavLink href="/chat" class="nav-link" activeClass="active">💬 Chat</NavLink>
             <NavLink href="/manage-categories" class="nav-link" activeClass="active">🗂️ Manage Categories</NavLink>
             <NavLink href="/settings" class="nav-link" activeClass="active">⚙️ Settings</NavLink>
-            <NavLink href="/logout" class="nav-link logout-button">🚪 Logout</NavLink>
-
+            <a href="/logout" class="nav-link logout-button">🚪 Logout</a>
         </nav>
     </div>
 
@@ -26,13 +25,6 @@
     </div>
 </div>
 
-@code {
-    private async Task Logout()
-    {
-        await HttpContextAccessor.HttpContext!.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        Navigation.NavigateTo("/login", true);
-    }
-}
 
 <style>
     .app-container {
