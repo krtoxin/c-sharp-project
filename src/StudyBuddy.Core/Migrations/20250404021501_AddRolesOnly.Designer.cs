@@ -12,8 +12,8 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250327010828_Init")]
-    partial class Init
+    [Migration("20250404021501_AddRolesOnly")]
+    partial class AddRolesOnly
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

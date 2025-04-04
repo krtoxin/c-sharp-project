@@ -6,6 +6,8 @@ namespace StudyBuddy.Core.Data
     public class AppDbContext : DbContext
     {
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Role> Roles { get; set; } = null!;
+
         public DbSet<Subject> Subjects { get; set; } = null!;
         public DbSet<SubTopic> SubTopics { get; set; } = null!;
         public DbSet<StudyTask> StudyTasks { get; set; } = null!;
@@ -48,6 +50,11 @@ namespace StudyBuddy.Core.Data
                 .HasOne(c => c.ParentCategory)
                 .WithMany(c => c.Subcategories)
                 .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<User>()
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
