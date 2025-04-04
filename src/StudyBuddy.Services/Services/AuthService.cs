@@ -48,11 +48,13 @@ namespace StudyBuddy.Services.Services
 
             var user = new User
             {
-                FullName = dto.FullName,
-                Email = dto.Email,
+                Id = Guid.NewGuid().ToString(),
                 UserName = dto.UserName,
+                Email = dto.Email,
+                FullName = dto.FullName,
                 PasswordHash = hashedPassword,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RoleId = 3 
             };
 
             await _userRepository.AddAsync(user);
