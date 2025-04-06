@@ -6,7 +6,6 @@ using StudyBuddy.Repositories.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using StudyBuddy.Services.IServices;
 using StudyBuddy.Services.Services;
@@ -31,6 +30,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ClientSecret = configuration["Authentication:Google:ClientSecret"];
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     });
+
 
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();

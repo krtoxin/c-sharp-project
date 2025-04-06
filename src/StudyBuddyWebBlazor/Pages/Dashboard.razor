@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
-@* @attribute [Authorize] *@
+@attribute [Authorize]
 
 
 <h2>Welcome to your Dashboard! 🎉</h2>
@@ -18,13 +18,19 @@ else
     <p><em>Loading user info...</em></p>
 }
 
+
+@inject AuthenticationStateProvider AuthStateProvider
+
+
 @code {
     private string? UserName;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated == true)
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
         {
             UserName = user.Identity.Name;
         }

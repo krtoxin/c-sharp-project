@@ -1,10 +1,9 @@
 ﻿@page
 @using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
 @functions {
     public async Task OnGet()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignOutAsync("Cookies");
         Response.Redirect("/login");
     }
 }
