@@ -1,15 +1,3 @@
 ﻿@page "/home"
-@using Microsoft.AspNetCore.Authorization
-@inject NavigationManager NavigationManager
 
-<h1 style="color:dimgrey;">Test Home Page</h1>
 
-<button @onclick="GoToLogin">Go to Login</button>
-
-@code {
-    private void GoToLogin()
-    {
-        Console.WriteLine("Button clicked");
-        NavigationManager.NavigateTo("/login");
-    }
-}

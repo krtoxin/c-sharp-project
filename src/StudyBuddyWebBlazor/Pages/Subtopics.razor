@@ -1,0 +1,82 @@
+﻿@page "/subtopics"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject ISubTopicService SubTopicService
+@inject NavigationManager Navigation
+
+<h2 class="mb-3">Manage Subtopics</h2>
+
+<button class="btn btn-success mb-3" @onclick="CreateSubtopic">➕ New Subtopic</button>
+
+@if (subtopics == null)
+{
+    <p><em>Loading subtopics...</em></p>
+}
+else if (!subtopics.Any())
+{
+    <p>No subtopics found.</p>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Subject</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sub in subtopics)
+            {
+                <tr>
+                    <td>@sub.Title</td>
+                    <td>@sub.Description</td>
+                    <td>@sub.Subject?.Name</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-2" @onclick="() => EditSubtopic(sub.Id)">✏️ Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteSubtopic(sub.Id)">🗑️ Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<SubTopic>? subtopics;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubtopics();
+    }
+
+    private async Task LoadSubtopics()
+    {
+        subtopics = (await SubTopicService.GetAllAsync()).ToList();
+    }
+
+    private void CreateSubtopic()
+    {
+        Navigation.NavigateTo("/subtopics/create");
+    }
+
+    private void EditSubtopic(int id)
+    {
+        Navigation.NavigateTo($"/subtopics/edit/{id}");
+    }
+
+    private async Task DeleteSubtopic(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this subtopic?");
+        if (confirmed)
+        {
+            await SubTopicService.DeleteAsync(id);
+            await LoadSubtopics(); // refresh
+        }
+    }
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
+}

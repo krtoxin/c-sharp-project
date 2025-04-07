@@ -1,5 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
+@using StudyBuddyWebBlazor.Pages
+
 
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
@@ -31,8 +33,10 @@
 
     private bool IsPublicPage(Type pageType)
     {
-        return pageType == typeof(StudyBuddyWebBlazor.Pages.Login) ||
-               pageType == typeof(StudyBuddyWebBlazor.Pages.Register);
+        return pageType == typeof(Login) ||
+               pageType == typeof(Register) ||
+               pageType == typeof(StudyBuddyWebBlazor.Components.Shared.RedirectAfterLogin);
     }
+
 }
  

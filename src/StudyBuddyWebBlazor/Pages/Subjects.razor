@@ -7,85 +7,123 @@
 @inject ICategoryRepository CategoryRepository
 @attribute [Authorize]
 
-<h2>📚 Subjects</h2>
+<div class="subjects-wrapper">
+    <div class="subjects-header">
+        <h1><i class="bi bi-journal-bookmark"></i> Subjects</h1>
+        <button class="btn-primary" @onclick="ShowAddForm"><i class="bi bi-plus-circle"></i> Add New Subject</button>
+    </div>
 
-<button class="btn btn-primary mb-3" @onclick="ShowAddForm">➕ Add New Subject</button>
+    @if (showForm)
+    {
+        <div class="subjects-form">
+            <EditForm Model="@subjectForm" OnValidSubmit="HandleSave">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-@if (showForm)
-{
-    <EditForm Model="@subjectForm" OnValidSubmit="HandleSave">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+                <div class="form-group">
+                    <label>Name</label>
+                    <InputText class="form-input" @bind-Value="subjectForm.Name" />
+                </div>
 
-        <div class="mb-2">
-            <label>Name:</label>
-            <InputText class="form-control" @bind-Value="subjectForm.Name" />
+                <div class="form-group">
+                    <label>Icon</label>
+                    <button class="btn-secondary" @onclick="ToggleEmojiPicker">Choose Emoji</button>
+
+                    @if (showEmojiPicker)
+                    {
+                        <div class="emoji-picker-container">
+                            <emoji-picker></emoji-picker>
+                        </div>
+                    }
+
+                    <div class="icon-preview">
+                        Selected: <span style="font-size: 1.5rem;">@subjectForm.Icon</span>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select class="form-input" @bind="subjectForm.CategoryId">
+                        <option disabled value="">-- Select Category --</option>
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
         </div>
+    }
 
-        <div class="mb-2">
-            <label>Icon (emoji or text):</label>
-            <InputText class="form-control" @bind-Value="subjectForm.Icon" />
+    @if (subjects == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!subjects.Any())
+    {
+        <p>No subjects found.</p>
+    }
+    else
+    {
+        <div class="subjects-table-wrapper">
+            <table class="subjects-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Icon</th>
+                        <th>Category</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var subject in subjects)
+                    {
+                        <tr>
+                            <td>@subject.Name</td>
+                            <td>@subject.Icon</td>
+                            <td>@categories.FirstOrDefault(c => c.Id == subject.CategoryId)?.Name</td>
+                            <td>
+                                <button class="btn-sm btn-warning" @onclick="() => Edit(subject)">Edit</button>
+                                <button class="btn-sm btn-danger" @onclick="() => Delete(subject.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
-
-        <div class="mb-3">
-            <label>Category:</label>
-            <select class="form-control" @bind="subjectForm.CategoryId">
-                <option disabled value="">-- Select Category --</option>
-                @foreach (var cat in categories)
-                {
-                    <option value="@cat.Id">@cat.Name</option>
-                }
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-success me-2">Save</button>
-        <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
-    </EditForm>
-}
-
-@if (subjects == null)
-{
-    <p>Loading...</p>
-}
-else if (!subjects.Any())
-{
-    <p>No subjects found.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Icon</th>
-                <th>Category</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var subject in subjects)
-            {
-                <tr>
-                    <td>@subject.Name</td>
-                    <td>@subject.Icon</td>
-                    <td>@categories.FirstOrDefault(c => c.Id == subject.CategoryId)?.Name</td>
-                    <td>
-                        <button class="btn btn-sm btn-warning me-2" @onclick="() => Edit(subject)">Edit</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(subject.Id)">Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    }
+</div>
 
 @code {
+    [Inject] private IJSRuntime JS { get; set; } = default!;
     private List<Subject>? subjects;
     private Subject subjectForm = new() { Name = string.Empty, Icon = string.Empty };
     private bool showForm = false;
     private bool isEdit = false;
-
     private List<Category> categories = new();
+
+    private bool showEmojiPicker = false;
+
+    private void ToggleEmojiPicker()
+    {
+        showEmojiPicker = !showEmojiPicker;
+    }
+
+    [JSInvokable]
+    public async Task EmojiSelected(string emoji)
+    {
+        subjectForm.Icon = emoji;
+        showEmojiPicker = false;
+        StateHasChanged();
+    }
+
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,4 +182,13 @@ else
     {
         showForm = false;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("setupEmojiPicker", DotNetObjectReference.Create(this));
+        }
+    }
+
 }

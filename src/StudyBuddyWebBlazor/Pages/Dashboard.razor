@@ -1,38 +1,31 @@
 ﻿@page "/dashboard"
-@using Microsoft.AspNetCore.Authorization
-@inject NavigationManager Navigation
-@inject IHttpContextAccessor HttpContextAccessor
-@attribute [Authorize]
 
+<div class="dashboard-wrapper">
+    <section class="dashboard-header">
+        <h1>Welcome back 👋</h1>
+        <p>Manage your subjects, tasks, and productivity like a pro.</p>
+    </section>
 
-<h2>Welcome to your Dashboard! 🎉</h2>
-
-<p>This is your personal space. From here you’ll manage your study subjects, tasks, and progress.</p>
-
-@if (!string.IsNullOrEmpty(UserName))
-{
-    <p>Hello, <strong>@UserName</strong> 👋</p>
-}
-else
-{
-    <p><em>Loading user info...</em></p>
-}
-
-
-@inject AuthenticationStateProvider AuthStateProvider
-
-
-@code {
-    private string? UserName;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity?.IsAuthenticated == true)
-        {
-            UserName = user.Identity.Name;
-        }
-    }
-}
+    <section class="dashboard-grid">
+        <div class="dashboard-card">
+            <i class="bi bi-journal-bookmark"></i>
+            <h3>Subjects</h3>
+            <p>12 Active Subjects</p>
+        </div>
+        <div class="dashboard-card">
+            <i class="bi bi-check2-circle"></i>
+            <h3>Tasks</h3>
+            <p>24 Pending Tasks</p>
+        </div>
+        <div class="dashboard-card">
+            <i class="bi bi-graph-up-arrow"></i>
+            <h3>Progress</h3>
+            <p>75% Complete</p>
+        </div>
+        <div class="dashboard-card">
+            <i class="bi bi-bell"></i>
+            <h3>Notifications</h3>
+            <p>3 New Messages</p>
+        </div>
+    </section>
+</div>

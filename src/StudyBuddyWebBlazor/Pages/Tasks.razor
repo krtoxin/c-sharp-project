@@ -1,0 +1,169 @@
+﻿@page "/tasks"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IStudyTaskService TaskService
+@inject ISubTopicService SubTopicService
+
+<div class="tasks-wrapper">
+    <div class="tasks-header">
+        <h1><i class="bi bi-list-check"></i> Tasks</h1>
+        <button class="btn-primary" @onclick="ShowAddForm"><i class="bi bi-plus-circle"></i> Add New Task</button>
+    </div>
+
+    @if (showForm)
+    {
+        <div class="tasks-form">
+            <EditForm Model="@taskForm" OnValidSubmit="HandleSave">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label>Question</label>
+                    <InputText class="form-input" @bind-Value="taskForm.Question" />
+                </div>
+
+                <div class="form-group">
+                    <label>Correct Answer</label>
+                    <InputText class="form-input" @bind-Value="taskForm.CorrectAnswer" />
+                </div>
+
+                <div class="form-group">
+                    <label>Solution Hint (optional)</label>
+                    <InputTextArea class="form-input" @bind-Value="taskForm.SolutionHint" />
+                </div>
+
+                <div class="form-group">
+                    <label>SubTopic</label>
+                    <select class="form-input" @bind="taskForm.SubTopicId">
+                        <option disabled value="">-- Select SubTopic --</option>
+                        @foreach (var sub in subTopics)
+                        {
+                            <option value="@sub.Id">@sub.Title</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+
+    @if (tasks == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!tasks.Any())
+    {
+        <p>No tasks found.</p>
+    }
+    else
+    {
+        <div class="tasks-table-wrapper">
+            <table class="subjects-table">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Answer</th>
+                        <th>Hint</th>
+                        <th>SubTopic</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in tasks)
+                    {
+                        <tr>
+                            <td>@task.Question</td>
+                            <td>@task.CorrectAnswer</td>
+                            <td>@(string.IsNullOrWhiteSpace(task.SolutionHint) ? "-" : task.SolutionHint)</td>
+                            <td>@task.SubTopic?.Title</td>
+                            <td>
+                                <button class="btn-sm btn-warning" @onclick="() => Edit(task)">Edit</button>
+                                <button class="btn-sm btn-danger" @onclick="() => Delete(task.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<StudyTask>? tasks;
+    private List<SubTopic> subTopics = new();
+    private StudyTask taskForm = new()
+        {
+            Question = string.Empty,
+            CorrectAnswer = string.Empty
+        };
+
+    private bool showForm = false;
+    private bool isEdit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+        await LoadSubTopics();
+    }
+
+    private async Task LoadTasks()
+    {
+        tasks = (await TaskService.GetAllAsync()).ToList();
+    }
+
+    private async Task LoadSubTopics()
+    {
+        subTopics = (await SubTopicService.GetAllAsync()).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        taskForm = new StudyTask
+            {
+                Question = string.Empty,
+                CorrectAnswer = string.Empty
+            };
+        showForm = true;
+        isEdit = false;
+    }
+
+    private void Edit(StudyTask task)
+    {
+        taskForm = new StudyTask
+            {
+                Id = task.Id,
+                Question = task.Question,
+                CorrectAnswer = task.CorrectAnswer,
+                SolutionHint = task.SolutionHint,
+                SubTopicId = task.SubTopicId
+            };
+        showForm = true;
+        isEdit = true;
+    }
+
+    private async Task HandleSave()
+    {
+        if (isEdit)
+            await TaskService.UpdateAsync(taskForm);
+        else
+            await TaskService.CreateAsync(taskForm);
+
+        await LoadTasks();
+        showForm = false;
+    }
+
+    private async Task Delete(int id)
+    {
+        await TaskService.DeleteAsync(id);
+        await LoadTasks();
+    }
+
+    private void Cancel()
+    {
+        showForm = false;
+    }
+}

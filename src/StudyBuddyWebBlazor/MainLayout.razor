@@ -1,92 +1,53 @@
 ﻿@inherits LayoutComponentBase
 
-@inject NavigationManager Navigation
-@inject IHttpContextAccessor HttpContextAccessor
+<div class="layout-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <img src="img/studylogo.svg" alt="StudyBuddy Logo" class="sidebar-logo" />
 
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
-
-<div class="app-container">
-    <div class="sidebar">
-        <div class="logo">📘 StudyBuddy</div>
-        <nav>
-            <NavLink href="/dashboard" class="nav-link" activeClass="active">🏠 Dashboard</NavLink>
-            <NavLink href="/subjects" class="nav-link" activeClass="active">📚 Subjects</NavLink>
-            <NavLink href="/tasks" class="nav-link" activeClass="active">✅ Tasks</NavLink>
-            <NavLink href="/chat" class="nav-link" activeClass="active">💬 Chat</NavLink>
-            <NavLink href="/manage-categories" class="nav-link" activeClass="active">🗂️ Manage Categories</NavLink>
-            <NavLink href="/settings" class="nav-link" activeClass="active">⚙️ Settings</NavLink>
-            <a href="/logout" class="nav-link logout-button">🚪 Logout</a>
+        <nav class="nav-links">
+            <NavLink href="/dashboard" class="nav-link" activeClass="active">
+                <i class="bi bi-house"></i> Dashboard
+            </NavLink>
+            <NavLink href="/subjects" class="nav-link" activeClass="active">
+                <i class="bi bi-journal-bookmark"></i> Subjects
+            </NavLink>
+            <NavLink href="/tasks" class="nav-link" activeClass="active">
+                <i class="bi bi-check2-circle"></i> Tasks
+            </NavLink>
+            <NavLink href="/subtopics" class="nav-link" activeClass="active">
+                <i class="bi bi-bookmarks"></i> Subtopics
+            </NavLink>
+            <NavLink href="/chat" class="nav-link" activeClass="active">
+                <i class="bi bi-chat-dots"></i> Chat
+            </NavLink>
+            <NavLink href="/manage-categories" class="nav-link" activeClass="active">
+                <i class="bi bi-folder2-open"></i> Categories
+            </NavLink>
+            <NavLink href="/settings" class="nav-link" activeClass="active">
+                <i class="bi bi-gear"></i> Settings
+            </NavLink>
+            <a href="/logout" class="nav-link logout-button">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
         </nav>
-    </div>
+    </aside>
 
-    <div class="main-content">
-        @Body
+    <!-- Content -->
+    <div class="layout-content">
+        <header class="topbar">
+            <div class="topbar-right">
+                <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
+                <button class="icon-btn" title="Calendar"><i class="bi bi-calendar3"></i></button>
+                <button class="icon-btn" title="What's New"><i class="bi bi-lightbulb"></i></button>
+                <div class="profile-menu" title="Profile">
+                    <img src="https://via.placeholder.com/40" alt="Profile" />
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            @Body
+        </main>
     </div>
 </div>
-
-
-<style>
-    .app-container {
-        display: flex;
-        height: 100vh;
-        font-family: 'Segoe UI', sans-serif;
-        background-color: #f4f6fa;
-    }
-
-    .sidebar {
-        width: 220px;
-        background-color: #23272a;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        padding: 1rem;
-    }
-
-    .logo {
-        font-size: 1.3rem;
-        font-weight: bold;
-        margin-bottom: 2rem;
-    }
-
-    nav {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .nav-link {
-        color: #b9bbbe;
-        text-decoration: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-    }
-
-        .nav-link:hover,
-        .logout-button:hover {
-            background-color: #2c2f33;
-            cursor: pointer;
-        }
-
-    .active {
-        background-color: #7289da;
-        color: white;
-    }
-
-    .main-content {
-        flex: 1;
-        padding: 2rem;
-        overflow-y: auto;
-    }
-
-    .logout-button {
-        background: none;
-        border: none;
-        color: #b9bbbe;
-        width: 100%;
-        text-align: left;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-    }
-</style>
