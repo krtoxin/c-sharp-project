@@ -31,7 +31,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     });
 
-
+builder.Services.AddScoped<ITaskOptionRepository, TaskOptionRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IStudyTaskRepository, StudyTaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();

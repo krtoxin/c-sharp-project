@@ -2,54 +2,108 @@
 @using StudyBuddy.Core.Entities
 @using StudyBuddy.Services.IServices
 @inject ISubTopicService SubTopicService
-@inject NavigationManager Navigation
+@inject ISubjectService SubjectService
+@inject IJSRuntime JS
 
-<h2 class="mb-3">Manage Subtopics</h2>
+<div class="subjects-wrapper">
+    <div class="subjects-header">
+        <h1><i class="bi bi-diagram-3-fill"></i> Subtopics</h1>
+        <button class="btn-primary" @onclick="ShowAddForm">
+            <i class="bi bi-plus-circle"></i> Add New Subtopic
+        </button>
+    </div>
 
-<button class="btn btn-success mb-3" @onclick="CreateSubtopic">➕ New Subtopic</button>
+    @if (showForm)
+    {
+        <div class="subjects-form">
+            <EditForm Model="@subtopicForm" OnValidSubmit="HandleSave">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-@if (subtopics == null)
-{
-    <p><em>Loading subtopics...</em></p>
-}
-else if (!subtopics.Any())
-{
-    <p>No subtopics found.</p>
-}
-else
-{
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Subject</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var sub in subtopics)
-            {
-                <tr>
-                    <td>@sub.Title</td>
-                    <td>@sub.Description</td>
-                    <td>@sub.Subject?.Name</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary me-2" @onclick="() => EditSubtopic(sub.Id)">✏️ Edit</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteSubtopic(sub.Id)">🗑️ Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+                <div class="form-group">
+                    <label>Title</label>
+                    <InputText class="form-input" @bind-Value="subtopicForm.Title" />
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <InputTextArea class="form-input" rows="3" @bind-Value="subtopicForm.Description" />
+                </div>
+
+                <div class="form-group">
+                    <label>Subject</label>
+                    <select class="form-input" @bind="subtopicForm.SubjectId">
+                        <option disabled value="0">-- Select Subject --</option>
+                        @foreach (var subj in subjects)
+                        {
+                            <option value="@subj.Id">@subj.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+
+    @if (subtopics == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!subtopics.Any())
+    {
+        <p>No subtopics yet. Start by adding one!</p>
+    }
+    else
+    {
+        <div class="subjects-table-wrapper">
+            <table class="subjects-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Subject</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in subtopics)
+                    {
+                        <tr>
+                            <td>@sub.Title</td>
+                            <td>@sub.Description</td>
+                            <td>@subjects.FirstOrDefault(s => s.Id == sub.SubjectId)?.Name</td>
+                            <td>
+                                <button class="btn-sm btn-warning" @onclick="() => Edit(sub)">Edit</button>
+                                <button class="btn-sm btn-danger" @onclick="() => Delete(sub.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 @code {
     private List<SubTopic>? subtopics;
+    private List<Subject> subjects = new();
+    private SubTopic subtopicForm = new();
+    private bool showForm = false;
+    private bool isEdit = false;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadSubjects();
         await LoadSubtopics();
+    }
+
+    private async Task LoadSubjects()
+    {
+        subjects = (await SubjectService.GetAllAsync()).ToList();
     }
 
     private async Task LoadSubtopics()
@@ -57,26 +111,49 @@ else
         subtopics = (await SubTopicService.GetAllAsync()).ToList();
     }
 
-    private void CreateSubtopic()
+    private void ShowAddForm()
     {
-        Navigation.NavigateTo("/subtopics/create");
+        subtopicForm = new SubTopic { Title = "", Description = "", SubjectId = 0 };
+        isEdit = false;
+        showForm = true;
     }
 
-    private void EditSubtopic(int id)
+    private void Edit(SubTopic sub)
     {
-        Navigation.NavigateTo($"/subtopics/edit/{id}");
+        subtopicForm = new SubTopic
+            {
+                Id = sub.Id,
+                Title = sub.Title,
+                Description = sub.Description,
+                SubjectId = sub.SubjectId
+            };
+        isEdit = true;
+        showForm = true;
     }
 
-    private async Task DeleteSubtopic(int id)
+    private async Task HandleSave()
+    {
+        if (isEdit)
+            await SubTopicService.UpdateAsync(subtopicForm);
+        else
+            await SubTopicService.CreateAsync(subtopicForm);
+
+        await LoadSubtopics();
+        showForm = false;
+    }
+
+    private async Task Delete(int id)
     {
         bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this subtopic?");
         if (confirmed)
         {
             await SubTopicService.DeleteAsync(id);
-            await LoadSubtopics(); // refresh
+            await LoadSubtopics();
         }
     }
 
-    [Inject]
-    private IJSRuntime JS { get; set; } = default!;
+    private void Cancel()
+    {
+        showForm = false;
+    }
 }

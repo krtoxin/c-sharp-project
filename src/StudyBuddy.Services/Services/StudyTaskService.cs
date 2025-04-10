@@ -1,21 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using StudyBuddy.Services.IServices;
-using StudyBuddy.Repositories.Interfaces;
 using StudyBuddy.Core.Entities;
+using StudyBuddy.Core.Enums;
+using StudyBuddy.Repositories.Interfaces;
+using StudyBuddy.Services.IServices;
 
 namespace StudyBuddy.Services.Services
 {
     public class StudyTaskService : IStudyTaskService
     {
         private readonly IStudyTaskRepository _taskRepo;
+        private readonly ITaskOptionRepository _optionRepo;
 
-        public StudyTaskService(IStudyTaskRepository taskRepo)
+        public StudyTaskService(
+            IStudyTaskRepository taskRepo,
+            ITaskOptionRepository optionRepo)
         {
             _taskRepo = taskRepo;
+            _optionRepo = optionRepo;
         }
 
         public async Task<IEnumerable<StudyTask>> GetAllAsync()
@@ -29,22 +33,51 @@ namespace StudyBuddy.Services.Services
 
         public async Task CreateAsync(StudyTask task)
         {
-            if (string.IsNullOrWhiteSpace(task.Question) || string.IsNullOrWhiteSpace(task.CorrectAnswer))
-                throw new ArgumentException("Question and CorrectAnswer are required.");
+            if (string.IsNullOrWhiteSpace(task.Question))
+                throw new ArgumentException("Question is required.");
 
             await _taskRepo.AddAsync(task);
+
+            if (task.TaskType == TaskType.MultipleChoice && task.Options?.Any() == true)
+            {
+                foreach (var option in task.Options)
+                {
+                    option.StudyTaskId = task.Id;
+                    await _optionRepo.AddAsync(option);
+                }
+            }
         }
 
         public async Task UpdateAsync(StudyTask task)
         {
+            if (string.IsNullOrWhiteSpace(task.Question))
+                throw new ArgumentException("Question is required.");
+
             await _taskRepo.UpdateAsync(task);
+
+            if (task.TaskType == TaskType.MultipleChoice)
+            {
+                await _optionRepo.DeleteByTaskIdAsync(task.Id);
+
+                if (task.Options?.Any() == true)
+                {
+                    foreach (var option in task.Options)
+                    {
+                        option.StudyTaskId = task.Id;
+                        await _optionRepo.AddAsync(option);
+                    }
+                }
+            }
         }
 
         public async Task DeleteAsync(int id)
         {
             var existing = await _taskRepo.GetByIdAsync(id);
-            if (existing is not null)
+            if (existing != null)
+            {
                 await _taskRepo.DeleteAsync(existing);
+                await _optionRepo.DeleteByTaskIdAsync(id);
+            }
         }
     }
 }
