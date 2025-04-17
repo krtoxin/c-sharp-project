@@ -8,6 +8,17 @@
             dotnetHelper.invokeMethodAsync("EmojiSelected", emoji);
         });
 
+        const handleOutside = (e) => {
+            if (!picker.contains(e.target)) {
+                dotnetHelper.invokeMethodAsync("CloseEmojiPicker");
+                document.removeEventListener("click", handleOutside);
+            }
+        };
+
+        setTimeout(() => {
+            document.addEventListener("click", handleOutside);
+        }, 0);
+
         observer.disconnect();
     });
 

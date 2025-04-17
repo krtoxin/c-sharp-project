@@ -5,6 +5,7 @@
 @using StudyBuddy.Services.IServices
 @inject ISubjectService SubjectService
 @inject ICategoryRepository CategoryRepository
+@inject IJSRuntime JS
 @attribute [Authorize]
 
 <div class="subjects-wrapper">
@@ -27,20 +28,21 @@
 
                 <div class="form-group">
                     <label>Icon</label>
-                    <button class="btn-secondary" @onclick="ToggleEmojiPicker">Choose Emoji</button>
+                    <div class="emoji-picker-container">
+                        <button class="btn-secondary" type="button" @onclick="ToggleEmojiPicker">Choose Emoji</button>
 
-                    @if (showEmojiPicker)
-                    {
-                        <div class="emoji-picker-container">
-                            <emoji-picker></emoji-picker>
+                        @if (showEmojiPicker)
+                        {
+                            <div style="margin-top: 0.5rem;">
+                                <emoji-picker></emoji-picker>
+                            </div>
+                        }
+
+                        <div class="icon-preview" style="margin-top: 0.5rem;">
+                            Selected: <span style="font-size: 1.5rem;">@subjectForm.Icon</span>
                         </div>
-                    }
-
-                    <div class="icon-preview">
-                        Selected: <span style="font-size: 1.5rem;">@subjectForm.Icon</span>
                     </div>
                 </div>
-
 
                 <div class="form-group">
                     <label>Category</label>
@@ -101,34 +103,25 @@
 </div>
 
 @code {
-    [Inject] private IJSRuntime JS { get; set; } = default!;
     private List<Subject>? subjects;
     private Subject subjectForm = new() { Name = string.Empty, Icon = string.Empty };
     private bool showForm = false;
     private bool isEdit = false;
     private List<Category> categories = new();
-
     private bool showEmojiPicker = false;
-
-    private void ToggleEmojiPicker()
-    {
-        showEmojiPicker = !showEmojiPicker;
-    }
-
-    [JSInvokable]
-    public async Task EmojiSelected(string emoji)
-    {
-        subjectForm.Icon = emoji;
-        showEmojiPicker = false;
-        StateHasChanged();
-    }
-
-
 
     protected override async Task OnInitializedAsync()
     {
         await LoadSubjects();
         await LoadCategories();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("setupEmojiPicker", DotNetObjectReference.Create(this));
+        }
     }
 
     private async Task LoadSubjects()
@@ -146,6 +139,7 @@
         subjectForm = new Subject { Name = string.Empty, Icon = string.Empty };
         isEdit = false;
         showForm = true;
+        showEmojiPicker = false;
     }
 
     private void Edit(Subject subject)
@@ -159,10 +153,14 @@
             };
         isEdit = true;
         showForm = true;
+        showEmojiPicker = false;
     }
 
     private async Task HandleSave()
     {
+        if (string.IsNullOrWhiteSpace(subjectForm.Name) || subjectForm.CategoryId == 0)
+            return; 
+
         if (isEdit)
             await SubjectService.UpdateAsync(subjectForm.Id, subjectForm);
         else
@@ -178,17 +176,35 @@
         await LoadSubjects();
     }
 
-    private void Cancel()
+    private async Task ToggleEmojiPicker()
     {
-        showForm = false;
-    }
+        showEmojiPicker = !showEmojiPicker;
+        StateHasChanged();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
+        if (showEmojiPicker)
         {
+            await Task.Delay(50);
             await JS.InvokeVoidAsync("setupEmojiPicker", DotNetObjectReference.Create(this));
         }
     }
 
+    [JSInvokable]
+    public async Task EmojiSelected(string emoji)
+    {
+        subjectForm.Icon = emoji;
+        showEmojiPicker = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void CloseEmojiPicker()
+    {
+        showEmojiPicker = false;
+        StateHasChanged();
+    }
+
+    private void Cancel()
+    {
+        showForm = false;
+    }
 }
