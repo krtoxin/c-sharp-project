@@ -15,10 +15,10 @@ namespace StudyBuddy.Repositories.Repositories
         }
 
         public async Task<User?> GetByEmailAsync(string email)
-            => await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+            => await _dbSet.Include(u => u.Role).FirstOrDefaultAsync(u => u.Email == email);
 
         public async Task<IEnumerable<User>> FindByNameAsync(string username)
-            => await _dbSet.Where(u => u.UserName == username).ToListAsync();
+            => await _dbSet.Include(u => u.Role).Where(u => u.UserName == username).ToListAsync();
 
         public override async Task AddAsync(User user)
         {

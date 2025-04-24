@@ -12,8 +12,8 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250410115353_InitialBaseline")]
-    partial class InitialBaseline
+    [Migration("20250418051302_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -134,6 +134,32 @@ namespace StudyBuddy.Core.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ChatRoomMember");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.Role", b =>
@@ -393,6 +419,17 @@ namespace StudyBuddy.Core.Migrations
                         .IsRequired();
 
                     b.Navigation("ChatRoom");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

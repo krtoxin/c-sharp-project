@@ -1,7 +1,10 @@
 ﻿@page "/login"
 @inject NavigationManager Navigation
-@using StudyBuddy.Core.DTOs
 @inject ApiUserService UserService
+@inject CustomAuthenticationStateProvider AuthProvider
+@using StudyBuddy.Core.DTOs
+@using Blazored.LocalStorage
+
 
 <div class="login-wrapper">
     <div class="login-container">
@@ -28,6 +31,9 @@
             </EditForm>
 
             <button class="google-button" @onclick="LoginWithGoogle">Login with Google</button>
+            <div class="login-footer mt-2">
+                <a href="/forgot-password" class="forgot-link">Forgot your password?</a>
+            </div>
 
             <div class="login-footer">
                 Don't have an account? <a href="/register">Register</a>
@@ -39,19 +45,35 @@
 @code {
     private LoginDto loginModel = new();
     private string? ErrorMessage;
+    @inject NavigationManager Navigation
+    @inject HttpClient Http
+    @inject Blazored.LocalStorage.ILocalStorageService localStorage
+
 
     private async Task HandleLogin()
     {
-        var result = await UserService.LoginAsync(loginModel);
-        if (!result.IsSuccess)
+        Console.WriteLine("Login button clicked");
+
+        var response = await Http.PostAsJsonAsync("https://localhost:7295/api/auth/login", loginModel);
+
+        if (response.IsSuccessStatusCode)
         {
-            ErrorMessage = string.Join(", ", result.Errors);
+            var result = await response.Content.ReadFromJsonAsync<AuthResultDto>();
+            await localStorage.SetItemAsync("accessToken", result.Token);
+
+            await AuthProvider.MarkUserAsAuthenticated(result); 
+
+            Console.WriteLine("Redirecting...");
+            Navigation.NavigateTo("/dashboard", true);
         }
         else
         {
-            Navigation.NavigateTo("/dashboard", true); 
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Login failed: {error}");
+            ErrorMessage = "Login failed. Please try again.";
         }
     }
+
 
     private void LoginWithGoogle()
     {

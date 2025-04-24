@@ -10,6 +10,6 @@ namespace StudyBuddy.Services.IServices
     public interface IJwtTokenGenerator
     {
         string GenerateToken(User user, IList<string> roles);
+        string GenerateRefreshToken(User user);
     }
-
 }

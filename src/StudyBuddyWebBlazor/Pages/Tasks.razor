@@ -4,6 +4,8 @@
 @using StudyBuddy.Services.IServices
 @inject IStudyTaskService TaskService
 @inject ISubTopicService SubTopicService
+@attribute [Authorize]
+
 
 <div class="tasks-wrapper">
     <div class="tasks-header">
