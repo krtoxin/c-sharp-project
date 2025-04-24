@@ -15,6 +15,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudyBuddy.Services", "StudyBuddy.Services\StudyBuddy.Services.csproj", "{3830507C-7931-4583-965D-1A5C7F580372}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StudyBuddyWebBlazor", "StudyBuddyWebBlazor\StudyBuddyWebBlazor.csproj", "{36804029-8B04-62BD-3389-91B61BFCCC66}"
+	ProjectSection(ProjectDependencies) = postProject
+		{668788FF-86C6-4102-8443-EDE19AFF5C03} = {668788FF-86C6-4102-8443-EDE19AFF5C03}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

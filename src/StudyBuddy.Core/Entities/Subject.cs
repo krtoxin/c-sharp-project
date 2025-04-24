@@ -1,11 +1,15 @@
-﻿namespace StudyBuddy.Core.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace StudyBuddy.Core.Entities
 {
     public class Subject
     {
         public int Id { get; set; }
+        [Required(ErrorMessage = "Name is required.")]
         public required string Name { get; set; }
         public required string Icon { get; set; }
 
+        [Required(ErrorMessage = "Category is required.")]
         public int? CategoryId { get; set; }
         public Category? Category { get; set; }
 

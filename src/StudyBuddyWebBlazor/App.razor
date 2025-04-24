@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
+@using StudyBuddyWebBlazor.Pages
 
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
@@ -26,13 +27,11 @@
 </CascadingAuthenticationState>
 
 @code {
-    [CascadingParameter] private Task<AuthenticationState> context { get; set; }
-    [Inject] NavigationManager Navigation { get; set; }
-
     private bool IsPublicPage(Type pageType)
     {
-        return pageType == typeof(StudyBuddyWebBlazor.Pages.Login) ||
-               pageType == typeof(StudyBuddyWebBlazor.Pages.Register);
+        return pageType == typeof(Login)
+            || pageType == typeof(Register)
+            || pageType == typeof(ForgotPassword)
+            || pageType == typeof(ResetPassword);
     }
 }
- 

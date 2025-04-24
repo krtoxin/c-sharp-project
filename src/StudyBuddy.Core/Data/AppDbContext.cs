@@ -7,14 +7,16 @@ namespace StudyBuddy.Core.Data
     {
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
-
         public DbSet<Subject> Subjects { get; set; } = null!;
         public DbSet<SubTopic> SubTopics { get; set; } = null!;
         public DbSet<StudyTask> StudyTasks { get; set; } = null!;
+        public DbSet<TaskOption> TaskOptions { get; set; } = null!;
         public DbSet<ChatRoom> ChatRooms { get; set; } = null!;
         public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
         public DbSet<UserProgress> UserProgresses { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -51,11 +53,30 @@ namespace StudyBuddy.Core.Data
                 .WithMany(c => c.Subcategories)
                 .HasForeignKey(c => c.ParentCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             builder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SubTopic>()
+                .HasOne(st => st.Subject)
+                .WithMany(s => s.SubTopics)
+                .HasForeignKey(st => st.SubjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<StudyTask>()
+                .HasOne(t => t.SubTopic)
+                .WithMany(st => st.Tasks)
+                .HasForeignKey(t => t.SubTopicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TaskOption>()
+                .HasOne(o => o.StudyTask)
+                .WithMany(t => t.Options)
+                .HasForeignKey(o => o.StudyTaskId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

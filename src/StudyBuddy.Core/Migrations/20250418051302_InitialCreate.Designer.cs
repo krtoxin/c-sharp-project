@@ -12,8 +12,8 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250404021501_AddRolesOnly")]
-    partial class AddRolesOnly
+    [Migration("20250418051302_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -136,7 +136,7 @@ namespace StudyBuddy.Core.Migrations
                     b.ToTable("ChatRoomMember");
                 });
 
-            modelBuilder.Entity("StudyBuddy.Core.Entities.StudyTask", b =>
+            modelBuilder.Entity("StudyBuddy.Core.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -144,9 +144,48 @@ namespace StudyBuddy.Core.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CorrectAnswer")
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.StudyTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Question")
                         .IsRequired()
@@ -156,6 +195,9 @@ namespace StudyBuddy.Core.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("SubTopicId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TaskType")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -199,7 +241,7 @@ namespace StudyBuddy.Core.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CategoryId")
+                    b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Icon")
@@ -215,6 +257,31 @@ namespace StudyBuddy.Core.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Subjects");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.TaskOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("StudyTaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudyTaskId");
+
+                    b.ToTable("TaskOptions");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.User", b =>
@@ -246,11 +313,16 @@ namespace StudyBuddy.Core.Migrations
                     b.Property<string>("ProfileImage")
                         .HasColumnType("text");
 
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.ToTable("Users");
                 });
@@ -351,6 +423,17 @@ namespace StudyBuddy.Core.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("StudyBuddy.Core.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("StudyBuddy.Core.Entities.StudyTask", b =>
                 {
                     b.HasOne("StudyBuddy.Core.Entities.SubTopic", "SubTopic")
@@ -378,9 +461,32 @@ namespace StudyBuddy.Core.Migrations
                     b.HasOne("StudyBuddy.Core.Entities.Category", "Category")
                         .WithMany("Subjects")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.TaskOption", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.StudyTask", "StudyTask")
+                        .WithMany("Options")
+                        .HasForeignKey("StudyTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StudyTask");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.User", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.UserProgress", b =>
@@ -435,9 +541,16 @@ namespace StudyBuddy.Core.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Role", b =>
+                {
+                    b.Navigation("Users");
+                });
+
             modelBuilder.Entity("StudyBuddy.Core.Entities.StudyTask", b =>
                 {
                     b.Navigation("MessagesWhereAttached");
+
+                    b.Navigation("Options");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.SubTopic", b =>

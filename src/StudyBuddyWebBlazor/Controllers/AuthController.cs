@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using StudyBuddy.Core.DTOs;
-using StudyBuddy.Services.IServices;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using StudyBuddy.Repositories.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using StudyBuddy.Core.DTOs;
+using StudyBuddy.Core.Entities;
+using StudyBuddy.Services.IServices;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.Google;
+using StudyBuddyWebBlazor.Services;
 
 namespace StudyBuddyWebBlazor.Controllers
 {
@@ -12,47 +14,90 @@ namespace StudyBuddyWebBlazor.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly IAuthService _authService;
-        private readonly IUserRepository _userRepository; 
+        private readonly IJwtTokenGenerator _jwtTokenGenerator;
+        private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
 
-        public AuthController(IAuthService authService, IUserRepository userRepository)
+
+        public AuthController(
+        IConfiguration configuration,
+        IAuthService authService,
+        IJwtTokenGenerator jwtTokenGenerator,
+        IUserService userService,
+        IEmailService emailService)
         {
+            _configuration = configuration;
             _authService = authService;
-            _userRepository = userRepository; 
+            _jwtTokenGenerator = jwtTokenGenerator;
+            _userService = userService;
+            _emailService = emailService;
         }
+
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<ActionResult<AuthResultDto>> Login([FromBody] LoginDto dto)
         {
-            Console.WriteLine($"Login request: {dto.Identifier} / {dto.Password}");
-
-            var result = await _authService.LoginAsync(dto);
-            if (!result.IsSuccess)
-            {
-                Console.WriteLine("Login failed: " + string.Join(", ", result.Errors));
-                return BadRequest(result);
-            }
-
-            var user = (await _userRepository.FindByNameAsync(dto.Identifier)).FirstOrDefault()
-                       ?? await _userRepository.GetByEmailAsync(dto.Identifier);
-
+            var user = await _authService.GetUserByLogin(dto.Identifier, dto.Password);
             if (user == null)
-                return BadRequest("User not found");
-
-            var claims = new List<Claim>
+                return Unauthorized(new AuthResultDto
                 {
-                    new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                    new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Email, user.Email ?? "")
-                };
+                    Token = string.Empty,
+                    RefreshToken = string.Empty,
+                    TokenExpired = 0,
+                    Errors = new() { "Invalid credentials" }
+                });
 
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            var roles = new List<string> { user.Role?.Name ?? "User" };
 
-            return Ok(result);
+            var accessToken = _jwtTokenGenerator.GenerateToken(user, roles);
+            var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user);
+
+            await _authService.AddRefreshTokenAsync(new RefreshToken
+            {
+                Token = refreshToken,
+                UserId = user.Id,
+                ExpiryDate = DateTime.UtcNow.AddDays(1)
+            });
+
+            return Ok(new AuthResultDto
+            {
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                TokenExpired = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds()
+            });
         }
 
+
+
+
+        [HttpGet("login-by-refresh")]
+        public async Task<ActionResult<AuthResultDto>> LoginByRefreshToken([FromQuery] string refreshToken)
+        {
+            var storedToken = await _authService.GetRefreshTokenAsync(refreshToken);
+            if (storedToken == null || storedToken.ExpiryDate < DateTime.UtcNow)
+                return Unauthorized("Refresh token is invalid or expired");
+
+            var user = storedToken.User;
+            var roles = new List<string> { user.Role?.Name ?? "User" };
+            var newAccessToken = _jwtTokenGenerator.GenerateToken(user, roles);
+            var newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken(user);
+
+            await _authService.AddRefreshTokenAsync(new RefreshToken
+            {
+                Token = newRefreshToken,
+                UserId = user.Id,
+                ExpiryDate = DateTime.UtcNow.AddDays(1)
+            });
+
+            return Ok(new AuthResultDto
+            {
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken,
+                TokenExpired = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds()
+            });
+        }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
@@ -72,7 +117,28 @@ namespace StudyBuddyWebBlazor.Controllers
                 RedirectUri = returnUrl
             };
 
-            return Challenge(props, Microsoft.AspNetCore.Authentication.Google.GoogleDefaults.AuthenticationScheme);
+            return Challenge(props, GoogleDefaults.AuthenticationScheme);
         }
+
+        [HttpPost("send-reset-code")]
+        public async Task<IActionResult> SendResetCode([FromBody] EmailDto request)
+        {
+            var user = await _userService.FindByEmailAsync(request.Email);
+            if (user == null)
+                return BadRequest(ApiResult.Failure("User not found"));
+
+            var code = await _userService.GenerateResetCodeAsync(user);
+            await _emailService.SendAsync(user.Email, "Your Reset Code", $"Your reset code is: {code}");
+
+            return Ok(ApiResult.Success());
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest model)
+        {
+            var result = await _userService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
     }
 }

@@ -1,0 +1,42 @@
+﻿<div class="emoji-picker-container">
+    <button @onclick="TogglePicker" class="btn-primary">Pick Emoji</button>
+
+    @if (showPicker)
+    {
+        <div class="picker-popup">
+            <emoji-picker></emoji-picker>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnEmojiSelected { get; set; }
+
+    private bool showPicker = false;
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    private DotNetObjectReference<EmojiPicker>? dotNetRef;
+
+    private async void TogglePicker()
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("setupEmojiPicker", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public async Task EmojiSelected(string emoji)
+    {
+        showPicker = false;
+        await OnEmojiSelected.InvokeAsync(emoji);
+        StateHasChanged();
+    }
+
+    private void TogglePicker()
+    {
+        showPicker = !showPicker;
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+}

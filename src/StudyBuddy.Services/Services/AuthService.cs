@@ -12,17 +12,20 @@ namespace StudyBuddy.Services.Services
         private readonly IConfiguration _config;
         private readonly IJwtTokenGenerator _tokenGenerator;
         private readonly IUserRepository _userRepository;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IPasswordHasher<User> _passwordHasher;
 
         public AuthService(
             IConfiguration config,
             IJwtTokenGenerator tokenGenerator,
             IUserRepository userRepository,
+            IRefreshTokenRepository refreshTokenRepository,
             IPasswordHasher<User> passwordHasher)
         {
             _config = config;
             _tokenGenerator = tokenGenerator;
             _userRepository = userRepository;
+            _refreshTokenRepository = refreshTokenRepository;
             _passwordHasher = passwordHasher;
         }
 
@@ -64,15 +67,10 @@ namespace StudyBuddy.Services.Services
 
         public async Task<AuthResultDto> LoginAsync(LoginDto dto)
         {
-            var user = await _userRepository.FindByNameAsync(dto.Identifier);
-            var found = user.FirstOrDefault();
+            var user = (await _userRepository.FindByNameAsync(dto.Identifier)).FirstOrDefault()
+                       ?? await _userRepository.GetByEmailAsync(dto.Identifier);
 
-            if (found == null)
-            {
-                found = await _userRepository.GetByEmailAsync(dto.Identifier);
-            }
-
-            if (found == null)
+            if (user == null)
             {
                 return new AuthResultDto
                 {
@@ -81,7 +79,7 @@ namespace StudyBuddy.Services.Services
                 };
             }
 
-            var result = _passwordHasher.VerifyHashedPassword(found, found.PasswordHash, dto.Password);
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
 
             if (result != PasswordVerificationResult.Success)
             {
@@ -92,23 +90,54 @@ namespace StudyBuddy.Services.Services
                 };
             }
 
+            return await GenerateAuthResult(user);
+        }
+
+        public async Task<User?> GetUserByLogin(string identifier, string password)
+        {
+            var user = (await _userRepository.FindByNameAsync(identifier)).FirstOrDefault()
+                       ?? await _userRepository.GetByEmailAsync(identifier);
+
+            if (user == null)
+                return null;
+
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+
+            return result == PasswordVerificationResult.Success ? user : null;
+        }
+
+        public async Task AddRefreshTokenAsync(RefreshToken refreshToken)
+        {
+            await _refreshTokenRepository.RemoveByUserIdAsync(refreshToken.UserId);
+            await _refreshTokenRepository.AddAsync(refreshToken);
+        }
+
+        public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
+        {
+            return await _refreshTokenRepository.GetByTokenAsync(token);
+        }
+
+        private async Task<AuthResultDto> GenerateAuthResult(User user)
+        {
+            var roles = new List<string> { user.Role?.Name ?? "User" };
+
+            var accessToken = _tokenGenerator.GenerateToken(user, roles);
+            var refreshToken = _tokenGenerator.GenerateRefreshToken(user);
+
+            await AddRefreshTokenAsync(new RefreshToken
+            {
+                Token = refreshToken,
+                UserId = user.Id,
+                ExpiryDate = DateTime.UtcNow.AddDays(1)
+            });
+
             return new AuthResultDto
             {
                 IsSuccess = true,
-                Token = _tokenGenerator.GenerateToken(found, new List<string>())
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                TokenExpired = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds()
             };
-        }
-
-
-        private Task<AuthResultDto> GenerateAuthResult(User user)
-        {
-            var token = _tokenGenerator.GenerateToken(user, new List<string>());
-
-            return Task.FromResult(new AuthResultDto
-            {
-                IsSuccess = true,
-                Token = token
-            });
         }
     }
 }

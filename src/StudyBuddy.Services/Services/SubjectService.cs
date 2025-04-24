@@ -52,6 +52,7 @@ namespace StudyBuddy.Services.Services
 
             existing.Name = updated.Name;
             existing.Icon = updated.Icon;
+            existing.CategoryId = updated.CategoryId;
 
             await _subjectRepo.UpdateAsync(existing);
             return true;

@@ -1,0 +1,102 @@
+﻿.dashboard-wrapper {
+    padding: 2rem;
+    animation: fadeIn 0.6s ease;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        color: #ff77ff;
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header p {
+        font-size: 1.2rem;
+        color: #ccc;
+    }
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.dashboard-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.1);
+    transition: transform 0.25s ease;
+    cursor: pointer;
+}
+
+    .dashboard-card:hover {
+        transform: translateY(-6px);
+    }
+
+    .dashboard-card i {
+        font-size: 2rem;
+        color: #ff77ff;
+        margin-bottom: 0.8rem;
+        display: block;
+    }
+
+    .dashboard-card h3 {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+        color: #fff;
+    }
+
+    .dashboard-card p {
+        color: #bbb;
+        font-size: 1rem;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-input {
+    background-color: #1a1a2e;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 1rem;
+}
+
+select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-caret-down-fill' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658A.5.5 0 0 1 2.885 5h10.23a.5.5 0 0 1 .433.758L8.753 11.14a.5.5 0 0 1-.753 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2rem;
+}
+
+.form-input:focus {
+    border-color: #ff77ff;
+    outline: none;
+}
+
+select.form-input option {
+    background-color: #1a1a2e;
+    color: #fff;
+}

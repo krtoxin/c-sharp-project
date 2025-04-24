@@ -10,6 +10,8 @@ namespace StudyBuddy.Core.DTOs
     {
         public bool IsSuccess { get; set; }
         public string Token { get; set; } = string.Empty;
+        public long TokenExpired { get; set; }
+        public string RefreshToken { get; set; } = string.Empty;
         public List<string> Errors { get; set; } = new();
     }
 }

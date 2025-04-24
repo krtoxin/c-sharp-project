@@ -1,0 +1,237 @@
+﻿@page "/tasks"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Core.Enums
+@using StudyBuddy.Services.IServices
+@inject IStudyTaskService TaskService
+@inject ISubTopicService SubTopicService
+@attribute [Authorize]
+
+
+<div class="tasks-wrapper">
+    <div class="tasks-header">
+        <h1><i class="bi bi-list-check"></i> Tasks</h1>
+        <button class="btn-primary" @onclick="ShowAddForm"><i class="bi bi-plus-circle"></i> Add New Task</button>
+    </div>
+
+    @if (showForm)
+    {
+        <div class="tasks-form">
+            <EditForm Model="@taskForm" OnValidSubmit="HandleSave">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label>Question</label>
+                    <InputText class="form-input" @bind-Value="taskForm.Question" />
+                </div>
+
+                <div class="form-group">
+                    <label>Task Type</label>
+                    <InputSelect class="form-input" @bind-Value="taskForm.TaskType">
+                        @foreach (TaskType type in Enum.GetValues(typeof(TaskType)))
+                        {
+                            <option value="@((int)type)">@type.ToString().Replace("TrueFalse", "True/False")</option>
+                        }
+                    </InputSelect>
+                </div>
+
+
+
+                @if (taskForm.TaskType == TaskType.MultipleChoice)
+                {
+                    <div class="form-group">
+                        <label>Options</label>
+                        @foreach (var option in taskForm.Options)
+                        {
+                            <div class="d-flex align-items-center mb-2">
+                                <InputText class="form-input me-2" @bind-Value="option.Text" placeholder="Option text..." />
+                                <InputCheckbox class="me-1" @bind-Value="option.IsCorrect" />
+                                <span class="me-2 text-muted">Correct</span>
+                                <button class="btn-sm btn-danger" @onclick="() => RemoveOption(option)">✕</button>
+                            </div>
+                        }
+                        <button class="btn-secondary mt-1" @onclick="AddOption">➕ Add Option</button>
+                    </div>
+                }
+
+                <div class="form-group">
+                    <label>Solution Hint (optional)</label>
+                    <InputTextArea class="form-input" @bind-Value="taskForm.SolutionHint" />
+                </div>
+
+                <div class="form-group">
+                    <label>SubTopic</label>
+                    <select class="form-input" @bind="taskForm.SubTopicId">
+                        <option disabled value="">-- Select SubTopic --</option>
+                        @foreach (var sub in subTopics)
+                        {
+                            <option value="@sub.Id">@sub.Title</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    }
+
+    @if (tasks == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!tasks.Any())
+    {
+        <p>No tasks found.</p>
+    }
+    else
+    {
+        <div class="tasks-table-wrapper">
+            <table class="subjects-table">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Type</th>
+                        <th>Options (Preview)</th>
+                        <th>Hint</th>
+                        <th>SubTopic</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in tasks)
+                    {
+                        <tr>
+                            <td>@task.Question</td>
+                            <td>@task.TaskType</td>
+                            <td>
+                                @if (task.TaskType == TaskType.MultipleChoice)
+                                {
+                                    <ul>
+                                        @foreach (var opt in task.Options)
+                                        {
+                                            <li>@opt.Text (@(opt.IsCorrect ? "✔" : "✘"))</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(task.SolutionHint) ? "-" : task.SolutionHint)</td>
+                            <td>@task.SubTopic?.Title</td>
+                            <td>
+                                <button class="btn-sm btn-warning" @onclick="() => Edit(task)">Edit</button>
+                                <button class="btn-sm btn-danger" @onclick="() => Delete(task.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<StudyTask>? tasks;
+    private List<SubTopic> subTopics = new();
+    private bool showForm = false;
+    private bool isEdit = false;
+
+    private StudyTask taskForm = new()
+        {
+            Question = string.Empty,
+            TaskType = TaskType.OpenEnded,
+            SubTopicId = 0, 
+            SolutionHint = string.Empty,
+            Options = new List<TaskOption>()
+        };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubTopics();
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        tasks = (await TaskService.GetAllAsync()).ToList();
+    }
+
+    private async Task LoadSubTopics()
+    {
+        subTopics = (await SubTopicService.GetAllAsync()).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        taskForm = new StudyTask
+            {
+                Question = string.Empty,
+                TaskType = TaskType.OpenEnded,
+                Options = new List<TaskOption>(),
+                SolutionHint = string.Empty,
+                SubTopicId = subTopics.FirstOrDefault()?.Id ?? 0
+            };
+
+        showForm = true;
+        isEdit = false;
+    }
+
+    private void Edit(StudyTask task)
+    {
+        taskForm = new StudyTask
+            {
+                Id = task.Id,
+                Question = task.Question,
+                TaskType = task.TaskType,
+                SolutionHint = task.SolutionHint,
+                SubTopicId = task.SubTopicId,
+                Options = task.Options?.Select(o => new TaskOption
+                {
+                    Id = o.Id,
+                    Text = o.Text,
+                    IsCorrect = o.IsCorrect
+                }).ToList() ?? new()
+            };
+        showForm = true;
+        isEdit = true;
+    }
+
+
+    private async Task HandleSave()
+    {
+        if (isEdit)
+            await TaskService.UpdateAsync(taskForm);
+        else
+            await TaskService.CreateAsync(taskForm);
+
+        await LoadTasks();
+        showForm = false;
+    }
+
+    private async Task Delete(int id)
+    {
+        await TaskService.DeleteAsync(id);
+        await LoadTasks();
+    }
+
+    private void Cancel()
+    {
+        showForm = false;
+    }
+
+    private void AddOption()
+    {
+        taskForm.Options.Add(new TaskOption { Text = string.Empty, IsCorrect = false });
+    }
+
+    private void RemoveOption(TaskOption option)
+    {
+        taskForm.Options.Remove(option);
+    }
+}

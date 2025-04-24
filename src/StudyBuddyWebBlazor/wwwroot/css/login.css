@@ -163,5 +163,12 @@
     .login-footer {
         font-size: 0.8rem;
     }
+
+    .forgot-link {
+        color: #ffaaff;
+        font-size: 0.9rem;
+        text-decoration: underline;
+    }
+
 }
 

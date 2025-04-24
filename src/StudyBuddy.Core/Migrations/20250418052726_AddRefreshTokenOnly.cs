@@ -7,11 +7,104 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace StudyBuddy.Core.Migrations
 {
     /// <inheritdoc />
-    public partial class AddRolesOnly : Migration
+    public partial class AddRefreshTokenOnly : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_RefreshTokens_User_UserId",
+                table: "RefreshTokens");
+
+            migrationBuilder.DropUniqueConstraint(
+                name: "AK_User_TempId1",
+                table: "User");
+
+            migrationBuilder.RenameTable(
+                name: "User",
+                newName: "Users");
+
+            migrationBuilder.RenameColumn(
+                name: "TempId1",
+                table: "Users",
+                newName: "UserName");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Id",
+                table: "RefreshTokens",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer")
+                .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+            migrationBuilder.AddColumn<string>(
+                name: "Id",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "CreatedAt",
+                table: "Users",
+                type: "timestamp with time zone",
+                nullable: false,
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+
+            migrationBuilder.AddColumn<string>(
+                name: "Email",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<string>(
+                name: "FullName",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsOnline",
+                table: "Users",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "LastActive",
+                table: "Users",
+                type: "timestamp with time zone",
+                nullable: false,
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+
+            migrationBuilder.AddColumn<string>(
+                name: "PasswordHash",
+                table: "Users",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<string>(
+                name: "ProfileImage",
+                table: "Users",
+                type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "RoleId",
+                table: "Users",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Users",
+                table: "Users",
+                column: "Id");
+
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -49,22 +142,16 @@ namespace StudyBuddy.Core.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
+                name: "Roles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    UserName = table.Column<string>(type: "text", nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    PasswordHash = table.Column<string>(type: "text", nullable: false),
-                    FullName = table.Column<string>(type: "text", nullable: false),
-                    ProfileImage = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsOnline = table.Column<bool>(type: "boolean", nullable: false),
-                    LastActive = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.PrimaryKey("PK_Roles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -75,7 +162,7 @@ namespace StudyBuddy.Core.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Icon = table.Column<string>(type: "text", nullable: false),
-                    CategoryId = table.Column<int>(type: "integer", nullable: true)
+                    CategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -165,9 +252,9 @@ namespace StudyBuddy.Core.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Question = table.Column<string>(type: "text", nullable: false),
-                    CorrectAnswer = table.Column<string>(type: "text", nullable: false),
                     SolutionHint = table.Column<string>(type: "text", nullable: true),
-                    SubTopicId = table.Column<int>(type: "integer", nullable: false)
+                    SubTopicId = table.Column<int>(type: "integer", nullable: false),
+                    TaskType = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -244,6 +331,32 @@ namespace StudyBuddy.Core.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "TaskOptions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Text = table.Column<string>(type: "text", nullable: false),
+                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
+                    StudyTaskId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TaskOptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TaskOptions_StudyTasks_StudyTaskId",
+                        column: x => x.StudyTaskId,
+                        principalTable: "StudyTasks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_RoleId",
+                table: "Users",
+                column: "RoleId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_ParentCategoryId",
                 table: "Categories",
@@ -285,6 +398,11 @@ namespace StudyBuddy.Core.Migrations
                 column: "SubjectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TaskOptions_StudyTaskId",
+                table: "TaskOptions",
+                column: "StudyTaskId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserProgresses_SubTopicId",
                 table: "UserProgresses",
                 column: "SubTopicId");
@@ -298,16 +416,46 @@ namespace StudyBuddy.Core.Migrations
                 name: "IX_UserSubject_SubjectId",
                 table: "UserSubject",
                 column: "SubjectId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_RefreshTokens_Users_UserId",
+                table: "RefreshTokens",
+                column: "UserId",
+                principalTable: "Users",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Users_Roles_RoleId",
+                table: "Users",
+                column: "RoleId",
+                principalTable: "Roles",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_RefreshTokens_Users_UserId",
+                table: "RefreshTokens");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Users_Roles_RoleId",
+                table: "Users");
+
             migrationBuilder.DropTable(
                 name: "ChatMessages");
 
             migrationBuilder.DropTable(
                 name: "ChatRoomMember");
+
+            migrationBuilder.DropTable(
+                name: "Roles");
+
+            migrationBuilder.DropTable(
+                name: "TaskOptions");
 
             migrationBuilder.DropTable(
                 name: "UserProgresses");
@@ -316,13 +464,10 @@ namespace StudyBuddy.Core.Migrations
                 name: "UserSubject");
 
             migrationBuilder.DropTable(
-                name: "StudyTasks");
-
-            migrationBuilder.DropTable(
                 name: "ChatRooms");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "StudyTasks");
 
             migrationBuilder.DropTable(
                 name: "SubTopics");
@@ -332,6 +477,81 @@ namespace StudyBuddy.Core.Migrations
 
             migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Users",
+                table: "Users");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Users_RoleId",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "Id",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "CreatedAt",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "Email",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "FullName",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "IsOnline",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "LastActive",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "PasswordHash",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "ProfileImage",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "RoleId",
+                table: "Users");
+
+            migrationBuilder.RenameTable(
+                name: "Users",
+                newName: "User");
+
+            migrationBuilder.RenameColumn(
+                name: "UserName",
+                table: "User",
+                newName: "TempId1");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Id",
+                table: "RefreshTokens",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer")
+                .OldAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+            migrationBuilder.AddUniqueConstraint(
+                name: "AK_User_TempId1",
+                table: "User",
+                column: "TempId1");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_RefreshTokens_User_UserId",
+                table: "RefreshTokens",
+                column: "UserId",
+                principalTable: "User",
+                principalColumn: "TempId1",
+                onDelete: ReferentialAction.Cascade);
         }
     }
 }
