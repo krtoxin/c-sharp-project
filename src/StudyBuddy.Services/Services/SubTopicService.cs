@@ -36,7 +36,18 @@ namespace StudyBuddy.Services.Services
         }
 
         public async Task UpdateAsync(SubTopic subTopic)
-            => await _subTopicRepo.UpdateAsync(subTopic);
+        {
+            var existing = await _subTopicRepo.GetByIdAsync(subTopic.Id);
+            if (existing == null)
+                throw new Exception("SubTopic not found");
+
+            existing.Title = subTopic.Title;
+            existing.Description = subTopic.Description;
+            existing.SubjectId = subTopic.SubjectId;
+
+            await _subTopicRepo.UpdateAsync(existing);
+        }
+
 
         public async Task DeleteAsync(int id)
         {

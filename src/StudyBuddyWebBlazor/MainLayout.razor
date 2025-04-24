@@ -1,50 +1,84 @@
-﻿@inherits LayoutComponentBase
+﻿@inject AuthenticationStateProvider AuthProvider
+@using System.Security.Claims
 
-<div class="layout-wrapper">
-    <aside class="sidebar">
-        <img src="img/studylogo.svg" alt="StudyBuddy Logo" class="sidebar-logo" />
-        <nav class="nav-links">
-            <NavLink href="/dashboard" class="nav-link" activeClass="active">
-                <i class="bi bi-house"></i> Dashboard
-            </NavLink>
-            <NavLink href="/subjects" class="nav-link" activeClass="active">
-                <i class="bi bi-journal-bookmark"></i> Subjects
-            </NavLink>
-            <NavLink href="/tasks" class="nav-link" activeClass="active">
-                <i class="bi bi-check2-circle"></i> Tasks
-            </NavLink>
-            <NavLink href="/subtopics" class="nav-link" activeClass="active">
-                <i class="bi bi-bookmarks"></i> Subtopics
-            </NavLink>
-            <NavLink href="/chat" class="nav-link" activeClass="active">
-                <i class="bi bi-chat-dots"></i> Chat
-            </NavLink>
-            <NavLink href="/manage-categories" class="nav-link" activeClass="active">
-                <i class="bi bi-folder2-open"></i> Categories
-            </NavLink>
-            <NavLink href="/settings" class="nav-link" activeClass="active">
-                <i class="bi bi-gear"></i> Settings
-            </NavLink>
-            <a href="/logout" class="nav-link logout-button">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
-        </nav>
-    </aside>
+@inherits LayoutComponentBase
 
-    <div class="layout-content">
-        <header class="topbar">
-            <div class="topbar-right">
-                <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
-                <button class="icon-btn" title="Calendar"><i class="bi bi-calendar3"></i></button>
-                <button class="icon-btn" title="What's New"><i class="bi bi-lightbulb"></i></button>
-                <div class="profile-menu" title="Profile">
-                    <i class="bi bi-person-circle" style="font-size: 1.5rem; color: pink;"></i>
+@code {
+    private ClaimsPrincipal? user;
+    private string? role;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+        role = user.FindFirst(ClaimTypes.Role)?.Value;
+    }
+
+    private bool IsInRole(string roleName) => role == roleName;
+}
+
+@if (user?.Identity?.IsAuthenticated ?? false)
+{
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <img src="img/studylogo.svg" alt="StudyBuddy Logo" class="sidebar-logo" />
+            <nav class="nav-links">
+                <NavLink href="/dashboard" class="nav-link" activeClass="active">
+                    <i class="bi bi-house"></i> Dashboard
+                </NavLink>
+
+                @if (IsInRole("Manager") || IsInRole("Admin"))
+                {
+                    <NavLink href="/tasks" class="nav-link" activeClass="active">
+                        <i class="bi bi-check2-circle"></i> Tasks
+                    </NavLink>
+                    <NavLink href="/subjects" class="nav-link" activeClass="active">
+                        <i class="bi bi-journal-bookmark"></i> Subjects
+                    </NavLink>
+                    <NavLink href="/subtopics" class="nav-link" activeClass="active">
+                        <i class="bi bi-bookmarks"></i> Subtopics
+                    </NavLink>
+                    <NavLink href="/manage-categories" class="nav-link" activeClass="active">
+                        <i class="bi bi-folder2-open"></i> Categories
+                    </NavLink>
+                }
+
+                @if (IsInRole("Admin"))
+                {
+                    <NavLink href="/user-management" class="nav-link" activeClass="active">
+                        <i class="bi bi-people"></i> Manage Users
+                    </NavLink>
+                }
+
+                <NavLink href="/chat" class="nav-link" activeClass="active">
+                    <i class="bi bi-chat-dots"></i> Chat
+                </NavLink>
+
+                <NavLink href="/settings" class="nav-link" activeClass="active">
+                    <i class="bi bi-gear"></i> Settings
+                </NavLink>
+
+                <a href="/logout" class="nav-link logout-button">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </nav>
+        </aside>
+
+        <div class="layout-content">
+            <header class="topbar">
+                <div class="topbar-right">
+                    <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
+                    <button class="icon-btn" title="Calendar"><i class="bi bi-calendar3"></i></button>
+                    <button class="icon-btn" title="What's New"><i class="bi bi-lightbulb"></i></button>
+                    <div class="profile-menu" title="Profile">
+                        <i class="bi bi-person-circle" style="font-size: 1.5rem; color: pink;"></i>
+                    </div>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <main class="main-content">
-            @Body
-        </main>
+            <main class="main-content">
+                @Body
+            </main>
+        </div>
     </div>
-</div>
+}
