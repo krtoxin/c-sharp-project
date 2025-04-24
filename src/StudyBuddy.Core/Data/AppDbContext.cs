@@ -15,6 +15,8 @@ namespace StudyBuddy.Core.Data
         public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
         public DbSet<UserProgress> UserProgresses { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -22,14 +24,12 @@ namespace StudyBuddy.Core.Data
         {
             base.OnModelCreating(builder);
 
-            // Composite keys
             builder.Entity<UserSubject>()
                 .HasKey(us => new { us.UserId, us.SubjectId });
 
             builder.Entity<ChatRoomMember>()
                 .HasKey(x => new { x.ChatRoomId, x.UserId });
 
-            // Chat relationships
             builder.Entity<ChatRoomMember>()
                 .HasOne(x => x.User)
                 .WithMany(x => x.ChatRooms)
@@ -42,42 +42,36 @@ namespace StudyBuddy.Core.Data
                 .HasForeignKey(x => x.ChatRoomId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Subject <-> Category
             builder.Entity<Subject>()
                 .HasOne(s => s.Category)
                 .WithMany(c => c.Subjects)
                 .HasForeignKey(s => s.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Category hierarchy
             builder.Entity<Category>()
                 .HasOne(c => c.ParentCategory)
                 .WithMany(c => c.Subcategories)
                 .HasForeignKey(c => c.ParentCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // User <-> Role
             builder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // SubTopic <-> Subject
             builder.Entity<SubTopic>()
                 .HasOne(st => st.Subject)
                 .WithMany(s => s.SubTopics)
                 .HasForeignKey(st => st.SubjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // StudyTask <-> SubTopic
             builder.Entity<StudyTask>()
                 .HasOne(t => t.SubTopic)
                 .WithMany(st => st.Tasks)
                 .HasForeignKey(t => t.SubTopicId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // TaskOption <-> StudyTask
             builder.Entity<TaskOption>()
                 .HasOne(o => o.StudyTask)
                 .WithMany(t => t.Options)
