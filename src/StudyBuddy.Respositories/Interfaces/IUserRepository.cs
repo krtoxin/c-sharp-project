@@ -2,9 +2,15 @@
 
 namespace StudyBuddy.Repositories.Interfaces
 {
-    public interface IUserRepository : IBaseRepository<User>
+    public interface IUserRepository
     {
+        Task<User?> GetByIdAsync(string id);
         Task<User?> GetByEmailAsync(string email);
         Task<IEnumerable<User>> FindByNameAsync(string username);
+        Task<IEnumerable<User>> GetAllWithRolesAsync();
+        Task AddAsync(User user);
+        Task UpdateAsync(User user);
+        Task DeleteAsync(User user);
     }
+
 }
