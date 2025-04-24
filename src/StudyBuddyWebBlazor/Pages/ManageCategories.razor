@@ -3,7 +3,7 @@
 @using StudyBuddy.Core.Entities
 @using StudyBuddy.Repositories.Interfaces
 @inject ICategoryRepository CategoryRepository
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin,Manager")]
 
 <div class="subjects-wrapper">
     <div class="subjects-header">

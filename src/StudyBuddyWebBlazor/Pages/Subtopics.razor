@@ -4,7 +4,8 @@
 @inject ISubTopicService SubTopicService
 @inject ISubjectService SubjectService
 @inject IJSRuntime JS
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin,Manager")]
+
 
 <div class="subjects-wrapper">
     <div class="subjects-header">

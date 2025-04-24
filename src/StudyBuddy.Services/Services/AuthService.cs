@@ -110,7 +110,7 @@ namespace StudyBuddy.Services.Services
         {
             await _refreshTokenRepository.RemoveByUserIdAsync(refreshToken.UserId);
             await _refreshTokenRepository.AddAsync(refreshToken);
-        }
+        } 
 
         public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
         {

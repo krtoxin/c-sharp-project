@@ -6,7 +6,7 @@
 @inject ISubjectService SubjectService
 @inject ICategoryRepository CategoryRepository
 @inject IJSRuntime JS
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Admin,Manager")]
 
 <div class="subjects-wrapper">
     <div class="subjects-header">
@@ -203,4 +203,8 @@
         StateHasChanged();
     }
 
+    private void Cancel()
+    {
+        showForm = false;
+    }
 }
