@@ -10,7 +10,7 @@ namespace StudyBuddy.Core.Enums
     {
         OpenEnded = 0,
         MultipleChoice = 1,
-        TrueFalse = 2
+        OneAnswerTest = 2
     }
 
 }

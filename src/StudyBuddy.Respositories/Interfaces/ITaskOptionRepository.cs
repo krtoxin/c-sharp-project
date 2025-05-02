@@ -11,6 +11,8 @@ namespace StudyBuddy.Repositories.Interfaces
     {
         Task DeleteByTaskIdAsync(int taskId);
         Task<IEnumerable<TaskOption>> GetByTaskIdAsync(int taskId);
+        Task AddRangeAsync(IEnumerable<TaskOption> options); // ✅ ADD THIS
+
     }
 
 }

@@ -184,6 +184,10 @@ namespace StudyBuddy.Core.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CorrectAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasColumnType("text");

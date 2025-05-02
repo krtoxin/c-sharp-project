@@ -25,5 +25,10 @@ namespace StudyBuddy.Repositories.Repositories
                 .Where(o => o.StudyTaskId == taskId)
                 .ToListAsync();
         }
+
+        public async Task AddRangeAsync(IEnumerable<TaskOption> options)
+        {
+            await _context.TaskOptions.AddRangeAsync(options);
+        }
     }
 }

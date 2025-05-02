@@ -1,0 +1,87 @@
+﻿.tasks-wrapper {
+    padding: 2rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.tasks-title {
+    font-size: 2rem;
+    color: #ff77ff;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.task-form {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.1);
+    backdrop-filter: blur(10px);
+    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+    .task-form input,
+    .task-form select,
+    .task-form textarea {
+        width: 100%;
+        padding: 0.6rem 0.9rem;
+        border-radius: 8px;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-size: 1rem;
+        transition: border 0.2s;
+    }
+
+        .task-form input:focus,
+        .task-form select:focus,
+        .task-form textarea:focus {
+            outline: 2px solid #ff77ff;
+        }
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.tasks-table-title {
+    color: #ff77ff;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.tasks-table-wrapper {
+    overflow-x: auto;
+}
+
+.tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(6px);
+    border-radius: 12px;
+    overflow: hidden;
+    color: #fff;
+}
+
+    .tasks-table th,
+    .tasks-table td {
+        padding: 0.9rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tasks-table th {
+        color: #ff77ff;
+        font-weight: 600;
+    }
+
+.btn-sm {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+}

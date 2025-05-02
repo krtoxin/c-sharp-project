@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace StudyBuddy.Repositories.Interfaces
 {
-    public interface IStudyTaskRepository : IBaseRepository<StudyTask>
+    public interface IChatRoomRepository : IBaseRepository<ChatRoom>
     {
-        Task<IEnumerable<StudyTask>> GetBySubTopicIdAsync(int subTopicId);
-
+        Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId);
     }
 }

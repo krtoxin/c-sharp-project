@@ -12,8 +12,8 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250418052726_AddRefreshTokenOnly")]
-    partial class AddRefreshTokenOnly
+    [Migration("20250502225834_Baseline")]
+    partial class Baseline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -187,6 +187,10 @@ namespace StudyBuddy.Core.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CorrectAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasColumnType("text");
@@ -204,7 +208,7 @@ namespace StudyBuddy.Core.Migrations
 
                     b.HasIndex("SubTopicId");
 
-                    b.ToTable("StudyTasks");
+                    b.ToTable("StudyTask");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.SubTopic", b =>
