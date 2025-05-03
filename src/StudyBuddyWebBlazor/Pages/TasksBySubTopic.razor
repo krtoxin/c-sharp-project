@@ -1,0 +1,144 @@
+﻿@page "/tasks/subtopic/{SubTopicId:int}"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IStudyTaskService TaskService
+@inject ISubTopicService SubTopicService
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "Admin,Manager")]
+
+<div class="tasks-wrapper">
+    <h2 class="tasks-title">📘 @SubTopicTitle</h2>
+
+    <button class="btn-primary" @onclick="ShowAddForm">
+        <i class="bi bi-plus-circle"></i> Add New Task
+    </button>
+
+    @if (showForm)
+    {
+        <div class="task-form">
+            <h4>@(isEdit ? "Edit Task" : "New Task")</h4>
+            <input class="form-input" placeholder="Question" @bind="NewTask.Question" />
+            <select class="form-input" @bind="NewTask.TaskType">
+                <option value="0">Open Ended</option>
+                <option value="1">Multiple Choice</option>
+                <option value="2">1 Answer Test</option>
+            </select>
+            <textarea class="form-input" placeholder="Hint (optional)" @bind="NewTask.SolutionHint"></textarea>
+            <input class="form-input" placeholder="Correct Answer" @bind="NewTask.CorrectAnswer" />
+
+            <div class="form-actions">
+                <button class="btn-primary" @onclick="SaveTask">Save</button>
+                <button class="btn-secondary" @onclick="CancelForm">Cancel</button>
+            </div>
+        </div>
+    }
+
+    @if (Tasks == null)
+    {
+        <p>Loading tasks...</p>
+    }
+    else if (!Tasks.Any())
+    {
+        <p class="text-warning">⚠️ No tasks found for this subtopic.</p>
+    }
+    else
+    {
+        <div class="tasks-table-wrapper">
+            <table class="tasks-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Question</th>
+                        <th>Type</th>
+                        <th>Hint</th>
+                        <th>Correct Answer</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in Tasks)
+                    {
+                        <tr>
+                            <td>@task.Id</td>
+                            <td>@task.Question</td>
+                            <td>@task.TaskType.ToString().Replace("OneAnswerTest", "1 Answer Test")</td>
+                            <td>@(string.IsNullOrEmpty(task.SolutionHint) ? "-" : task.SolutionHint)</td>
+                            <td>@task.CorrectAnswer</td>
+                            <td>
+                                <button class="btn-sm btn-warning" @onclick="() => EditTask(task)">Edit</button>
+                                <button class="btn-sm btn-danger" @onclick="() => DeleteTask(task.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int SubTopicId { get; set; }
+
+    private List<StudyTask> Tasks = new();
+    private string SubTopicTitle = "Tasks";
+    private StudyTask NewTask = new();
+    private bool showForm = false;
+    private bool isEdit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var sub = await SubTopicService.GetByIdAsync(SubTopicId);
+        SubTopicTitle = sub?.Title ?? "[Unknown Subtopic]";
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        Tasks = (await TaskService.GetBySubTopicIdAsync(SubTopicId)).ToList();
+    }
+
+    private void ShowAddForm()
+    {
+        NewTask = new StudyTask { Question = string.Empty, SubTopicId = SubTopicId };
+        showForm = true;
+        isEdit = false;
+    }
+
+    private void EditTask(StudyTask task)
+    {
+        NewTask = new StudyTask
+            {
+                Id = task.Id,
+                Question = task.Question,
+                TaskType = task.TaskType,
+                SolutionHint = task.SolutionHint,
+                CorrectAnswer = task.CorrectAnswer,
+                SubTopicId = SubTopicId
+            };
+        showForm = true;
+        isEdit = true;
+    }
+
+    private async Task SaveTask()
+    {
+        if (isEdit)
+            await TaskService.UpdateAsync(NewTask);
+        else
+            await TaskService.CreateAsync(NewTask);
+
+        await LoadTasks();
+        showForm = false;
+    }
+
+    private async Task DeleteTask(int id)
+    {
+        await TaskService.DeleteAsync(id);
+        await LoadTasks();
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+    }
+}

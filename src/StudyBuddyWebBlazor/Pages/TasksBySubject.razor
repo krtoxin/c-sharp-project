@@ -1,0 +1,56 @@
+﻿@page "/tasks/subject/{SubjectId:int}"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IStudyTaskService TaskService
+@inject ISubjectService SubjectService
+@inject NavigationManager Navigation
+
+<h2 class="section-title">@SubjectName</h2>
+
+@if (SubTopics == null)
+{
+    <p>Loading subtopics...</p>
+}
+else if (!SubTopics.Any())
+{
+    <p class="text-warning">⚠️ No subtopics available for this subject.</p>
+}
+else
+{
+    <div class="subject-grid">
+        @foreach (var sub in SubTopics)
+        {
+            <div class="subject-card" @onclick="() => NavigateToSubTopic(sub.Id)">
+                <div class="subject-icon-wrapper">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="subject-card-label">@sub.Title</div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int SubjectId { get; set; }
+
+    private string SubjectName = "Subject";
+    private List<SubTopic> SubTopics = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var subject = await SubjectService.GetByIdAsync(SubjectId);
+        SubjectName = subject?.Name ?? "[Unknown Subject]";
+
+        var allSubtopics = await TaskService.GetAllSubTopicsAsync();
+        SubTopics = allSubtopics
+            .Where(st => st.SubjectId == SubjectId)
+            .OrderBy(st => st.Title)
+            .ToList();
+    }
+
+    private void NavigateToSubTopic(int subId)
+    {
+        Navigation.NavigateTo($"/tasks/subtopic/{subId}");
+    }
+}

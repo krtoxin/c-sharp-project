@@ -1,125 +1,46 @@
 ﻿@page "/tasks"
+@inject ISubjectService SubjectService
+@inject NavigationManager Navigation
 @using StudyBuddy.Core.Entities
 @using StudyBuddy.Services.IServices
-@inject IStudyTaskService TaskService
-@inject IJSRuntime JS
-@attribute [Authorize(Roles = "Admin,Manager")]
 
-<div class="tasks-wrapper">
-    <h2 class="tasks-title">Tasks</h2>
+<div class="subjects-wrapper">
+    <h2 class="subjects-header-title">📘 Choose a Subject</h2>
 
-    <div class="task-form">
-        <input class="form-input" placeholder="Question" @bind="NewTask.Question" />
-
-        <select class="form-input" @bind="NewTask.TaskType">
-            <option value="0">Open Ended</option>
-            <option value="1">Multiple Choice</option>
-            <option value="2">1 answer test</option>
-        </select>
-
-        <textarea class="form-input" placeholder="Solution Hint (optional)" @bind="NewTask.SolutionHint"></textarea>
-
-        <input class="form-input" placeholder="Correct answer" @bind="NewTask.CorrectAnswer" />
-
-        <select class="form-input" @bind="NewTask.SubTopicId">
-            <option value="0" disabled hidden>-- Select SubTopic --</option>
-            @if (SubTopics != null)
+    @if (Subjects == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!Subjects.Any())
+    {
+        <p class="text-warning">⚠️ No subjects found.</p>
+    }
+    else
+    {
+        <div class="subject-card-grid">
+            @foreach (var subj in Subjects)
             {
-                @foreach (var sub in SubTopics)
-                {
-                    <option value="@sub.Id">@sub.Title</option>
-                }
+                <div class="subject-card" @onclick="() => NavigateToSubject(subj.Id)">
+                    <div class="subject-card-icon">
+                        <i class="@subj.Icon"></i>
+                    </div>
+                    <div class="subject-card-label">@subj.Name</div>
+                </div>
             }
-        </select>
-
-        <div class="form-actions">
-            <button class="btn-primary" @onclick="SaveTask">Save</button>
-            <button class="btn-secondary" @onclick="ResetForm">Cancel</button>
         </div>
-    </div>
-
-    @if (SubTopics == null)
-    {
-        <p>Loading subtopics...</p>
-    }
-    else if (!SubTopics.Any())
-    {
-        <p class="text-warning">⚠️ No subtopics found. Check your database or seeding.</p>
-    }
-
-    @if (TaskList?.Any() == true)
-    {
-        <h3 class="tasks-table-title">Tasks List</h3>
-        <div class="tasks-table-wrapper">
-            <table class="tasks-table">
-                <thead>
-                    <tr>
-                        <th>Task ID</th>
-                        <th>Task title</th>
-                        <th>Task type</th>
-                        <th>Hint</th>
-                        <th>Correct answer</th>
-                        <th>SubTopic</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var task in TaskList)
-                    {
-                        <tr>
-                            <td>@task.Id</td>
-                            <td>@task.Question</td>
-                            <td>@task.TaskType.ToString().Replace("OneAnswerTest", "1 answer test")</td>
-                            <td>@(string.IsNullOrEmpty(task.SolutionHint) ? "-" : task.SolutionHint)</td>
-                            <td>@task.CorrectAnswer</td>
-                            <td>@task.SubTopic?.Title ?? "[Missing]"</td>
-                            <td>
-                                <button class="btn-warning btn-sm">Edit</button>
-                                <button class="btn-danger btn-sm" @onclick="() => DeleteTask(task.Id)">Delete</button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else if (TaskList != null)
-    {
-        <p>No tasks found.</p>
     }
 </div>
 
 @code {
-    private List<StudyTask> TaskList = new();
-    private List<SubTopic> SubTopics = new();
-    private StudyTask NewTask = new() { Question = string.Empty, SubTopicId = 0 };
+    private List<Subject> Subjects = new();
 
     protected override async Task OnInitializedAsync()
     {
-        SubTopics = await TaskService.GetAllSubTopicsAsync();
-        await LoadTasks();
+        Subjects = (await SubjectService.GetAllAsync()).ToList();
     }
 
-    private async Task LoadTasks()
+    private void NavigateToSubject(int id)
     {
-        TaskList = (await TaskService.GetAllAsync()).ToList();
-    }
-
-    private async Task SaveTask()
-    {
-        await TaskService.CreateAsync(NewTask);
-        await LoadTasks();
-        ResetForm();
-    }
-
-    private async Task DeleteTask(int id)
-    {
-        await TaskService.DeleteAsync(id);
-        await LoadTasks();
-    }
-
-    private void ResetForm()
-    {
-        NewTask = new StudyTask { Question = string.Empty, SubTopicId = 0 };
+        Navigation.NavigateTo($"/tasks/subject/{id}");
     }
 }

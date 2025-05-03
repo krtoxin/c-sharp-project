@@ -111,5 +111,11 @@ namespace StudyBuddy.Services.Services
             await _taskRepo.DeleteAsync(existing);
             await _taskRepo.SaveAsync();
         }
+
+        public async Task<List<SubTopic>> GetSubTopicsBySubjectIdAsync(int subjectId)
+        {
+            return (await _subTopicRepo.GetBySubjectIdAsync(subjectId)).ToList();
+        }
+
     }
 }
