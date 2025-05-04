@@ -16,6 +16,8 @@ namespace StudyBuddy.Core.Data
         public DbSet<UserProgress> UserProgresses { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<TaskAttempt> TaskAttempts { get; set; } = null!;
+
 
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }

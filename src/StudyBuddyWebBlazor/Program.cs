@@ -55,6 +55,8 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IUserService, UserService>(); 
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IChatRoomService, ChatRoomService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ITaskAttemptService, TaskAttemptService>();
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();

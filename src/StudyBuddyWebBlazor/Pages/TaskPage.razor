@@ -1,0 +1,182 @@
+﻿@page "/task/{TaskId:int}"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Core.Enums
+@using StudyBuddy.Services.IServices
+@inject IStudyTaskService TaskService
+@inject ITaskAttemptService AttemptService
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="task-display-wrapper">
+    @if (Task == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <h2 class="task-question-title">@Task.Question</h2>
+
+        @if (!string.IsNullOrEmpty(Task.ImageUrl))
+        {
+            <img src="@Task.ImageUrl" class="task-image-display" />
+        }
+
+        <div class="task-type-label">@Task.TaskType.ToString().Replace("OneAnswerTest", "1 Answer Test")</div>
+
+        @if (IsAdminOrManager)
+        {
+            @if (Task.TaskType == TaskType.OpenEnded)
+            {
+                <div class="task-open-ended-display">
+                    <label class="form-label">Correct Answer:</label>
+                    <div class="open-answer-box">@Task.CorrectAnswer</div>
+                </div>
+            }
+            else
+            {
+                <div class="task-options-display">
+                    @foreach (var opt in Task.Options)
+                    {
+                        <div class="option-choice">
+                            <input type="checkbox" checked="@opt.IsCorrect" disabled />
+                            <span>@opt.Text</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (TaskAttempts?.Count > 0)
+            {
+                <div class="task-hint-box mt-3">
+                    <strong>User Attempts:</strong>
+                    <ul>
+                        @foreach (var attempt in TaskAttempts)
+                        {
+                            <li>
+                                <strong>@attempt.User.Email</strong> —
+                                @attempt.AttemptTime.ToLocalTime():
+                                <span class="@(attempt.IsCorrect ? "text-success" : "text-danger")">
+                                    @(attempt.IsCorrect ? "✅ Correct" : "❌ Wrong")
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+        else
+        {
+            <EditForm OnValidSubmit="SubmitAnswer">
+                @if (Task.TaskType == TaskType.OpenEnded)
+                {
+                    <div class="task-open-ended-display">
+                        <label>Your Answer:</label>
+                        <InputText class="form-control open-answer-box" @bind-Value="UserInputText" />
+                    </div>
+                }
+                else if (Task.TaskType == TaskType.MultipleChoice)
+                {
+                    <div class="task-options-display">
+                        @foreach (var opt in Task.Options)
+                        {
+                            <label class="option-choice">
+                                <input type="checkbox" value="@opt.Text" @onchange="e => ToggleOption(opt.Text, e.Value)" />
+                                <span>@opt.Text</span>
+                            </label>
+                        }
+                    </div>
+                }
+                else if (Task.TaskType == TaskType.OneAnswerTest)
+                {
+                    <div class="task-options-display">
+                        @foreach (var opt in Task.Options)
+                        {
+                            <label class="option-choice">
+                                <input type="radio" name="one" checked="@((SingleSelected == opt.Text))" @onchange="() => SelectSingleOption(opt.Text)" />
+                                <span>@opt.Text</span>
+                            </label>
+                        }
+                    </div>
+                }
+
+                <button class="btn btn-outline-secondary mt-2" type="submit">Submit Answer</button>
+            </EditForm>
+
+            @if (AnswerSubmitted)
+            {
+                <div class="mt-3 @(AnswerCorrect ? "feedback-correct" : "feedback-incorrect")">
+                    @(AnswerCorrect ? "✅ Correct!" : "❌ Incorrect. Try again.")
+                </div>
+            }
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Task.SolutionHint))
+        {
+            <div class="task-hint-box">
+                <strong>Hint:</strong> @Task.SolutionHint
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public int TaskId { get; set; }
+    private StudyTask? Task;
+    private List<TaskAttempt> TaskAttempts = new();
+    private bool IsAdminOrManager;
+
+    private string UserInputText = string.Empty;
+    private List<string> SelectedOptions = new();
+    private string? SingleSelected;
+    private bool AnswerSubmitted = false;
+    private bool AnswerCorrect = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        IsAdminOrManager = user.IsInRole("Admin") || user.IsInRole("Manager");
+
+        Task = await TaskService.GetByIdAsync(TaskId);
+        if (IsAdminOrManager)
+        {
+            TaskAttempts = await AttemptService.GetAttemptsByTaskIdAsync(TaskId);
+        }
+    }
+
+    private async Task SubmitAnswer()
+    {
+        if (Task == null) return;
+
+        bool correct = Task.TaskType switch
+        {
+            TaskType.OpenEnded => string.Equals(UserInputText?.Trim(), Task.CorrectAnswer?.Trim(), StringComparison.OrdinalIgnoreCase),
+            TaskType.MultipleChoice => SelectedOptions.OrderBy(x => x).SequenceEqual(Task.Options.Where(o => o.IsCorrect).Select(o => o.Text).OrderBy(x => x)),
+            TaskType.OneAnswerTest => Task.Options.Any(o => o.IsCorrect && o.Text == SingleSelected),
+            _ => false
+        };
+
+        AnswerCorrect = correct;
+        AnswerSubmitted = true;
+
+        await AttemptService.SaveAttemptAsync(new TaskAttempt
+            {
+                TaskId = Task.Id,
+                IsCorrect = correct
+            });
+    }
+
+    private void ToggleOption(string text, object? checkedValue)
+    {
+        bool isChecked = checkedValue is bool b && b;
+        if (isChecked)
+        {
+            if (!SelectedOptions.Contains(text)) SelectedOptions.Add(text);
+        }
+        else
+        {
+            SelectedOptions.Remove(text);
+        }
+    }
+
+    private void SelectSingleOption(string text) => SingleSelected = text;
+}

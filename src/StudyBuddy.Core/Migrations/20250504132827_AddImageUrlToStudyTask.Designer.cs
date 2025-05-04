@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudyBuddy.Core.Data;
@@ -11,9 +12,11 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250504132827_AddImageUrlToStudyTask")]
+    partial class AddImageUrlToStudyTask
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -263,36 +266,6 @@ namespace StudyBuddy.Core.Migrations
                     b.ToTable("Subjects");
                 });
 
-            modelBuilder.Entity("StudyBuddy.Core.Entities.TaskAttempt", b =>
-                {
-                    b.Property<int>("TaskAttemptId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TaskAttemptId"));
-
-                    b.Property<DateTime>("AttemptTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("TaskId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("TaskAttemptId");
-
-                    b.HasIndex("TaskId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("TaskAttempts");
-                });
-
             modelBuilder.Entity("StudyBuddy.Core.Entities.TaskOption", b =>
                 {
                     b.Property<int>("Id")
@@ -499,25 +472,6 @@ namespace StudyBuddy.Core.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("StudyBuddy.Core.Entities.TaskAttempt", b =>
-                {
-                    b.HasOne("StudyBuddy.Core.Entities.StudyTask", "Task")
-                        .WithMany()
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudyBuddy.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Task");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.TaskOption", b =>

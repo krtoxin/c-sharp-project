@@ -1,84 +1,136 @@
 ﻿@page "/tasks/subtopic/{SubTopicId:int}"
 @using StudyBuddy.Core.Entities
+@using StudyBuddy.Core.Enums
 @using StudyBuddy.Services.IServices
 @inject IStudyTaskService TaskService
 @inject ISubTopicService SubTopicService
-@inject IJSRuntime JS
+@inject IFileService FileService
+@inject NavigationManager Navigation
 @attribute [Authorize(Roles = "Admin,Manager")]
 
-<div class="tasks-wrapper">
-    <h2 class="tasks-title">📘 @SubTopicTitle</h2>
+<EditForm Model="NewTask" OnValidSubmit="SaveTask">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
 
-    <button class="btn-primary" @onclick="ShowAddForm">
-        <i class="bi bi-plus-circle"></i> Add New Task
-    </button>
+    <div class="tasks-wrapper">
+        <h2 class="tasks-title">📘 @SubTopicTitle</h2>
 
-    @if (showForm)
-    {
-        <div class="task-form">
-            <h4>@(isEdit ? "Edit Task" : "New Task")</h4>
-            <input class="form-input" placeholder="Question" @bind="NewTask.Question" />
-            <select class="form-input" @bind="NewTask.TaskType">
-                <option value="0">Open Ended</option>
-                <option value="1">Multiple Choice</option>
-                <option value="2">1 Answer Test</option>
-            </select>
-            <textarea class="form-input" placeholder="Hint (optional)" @bind="NewTask.SolutionHint"></textarea>
-            <input class="form-input" placeholder="Correct Answer" @bind="NewTask.CorrectAnswer" />
+        <button class="btn btn-primary mb-3" type="button" @onclick="ShowAddForm">
+            <i class="bi bi-plus-circle"></i> Add New Task
+        </button>
 
-            <div class="form-actions">
-                <button class="btn-primary" @onclick="SaveTask">Save</button>
-                <button class="btn-secondary" @onclick="CancelForm">Cancel</button>
+        @if (showForm)
+        {
+            <div class="card task-form mb-4">
+                <h4>@(isEdit ? "Edit Task" : "New Task")</h4>
+
+                <div class="mb-3">
+                    <InputText class="form-control" @bind-Value="NewTask.Question" placeholder="Question" />
+                    <ValidationMessage For="@(() => NewTask.Question)" />
+                </div>
+
+                <div class="mb-3">
+                    <InputText class="form-control" @bind-Value="NewTask.SolutionHint" placeholder="Hint (optional)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Task Type</label>
+                    <select class="form-select" @onchange="HandleTaskTypeChanged">
+                        <option value="0">Open Ended</option>
+                        <option value="1">Multiple Choice</option>
+                        <option value="2">1 Answer Test</option>
+                    </select>
+                </div>
+
+                @if (NewTask.TaskType == TaskType.OpenEnded)
+                {
+                    <div class="mb-3">
+                        <InputText class="form-control" @bind-Value="NewTask.CorrectAnswer" placeholder="Correct Answer" />
+                        <ValidationMessage For="@(() => NewTask.CorrectAnswer)" />
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3 options-block">
+                        <label class="form-label">Options</label>
+
+                        @foreach (var option in NewTask.Options)
+                        {
+                            <div class="option-row">
+                                <input type="text" placeholder="Option text" @bind="option.Text" />
+                                @if (NewTask.TaskType == TaskType.MultipleChoice)
+                                {
+                                    <input type="checkbox" class="option-check" @bind="option.IsCorrect" />
+                                }
+                                else if (NewTask.TaskType == TaskType.OneAnswerTest)
+                                {
+                                    <input type="radio" class="option-check" name="correct" checked="@option.IsCorrect" @onchange="() => SetSingleCorrect(option)" />
+                                }
+                                <button class="btn btn-danger btn-sm" type="button" @onclick="() => RemoveOption(option)">🗑</button>
+                            </div>
+                        }
+
+                        @if (!OptionsValid())
+                        {
+                            <div class="text-warning mt-1">Please add at least one option and select the correct one.</div>
+                        }
+
+                        <button class="btn btn-outline-secondary mt-2" type="button" @onclick="AddOption">➕ Add Option</button>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Attach Image (optional):</label>
+                    <div class="custom-file-wrapper">
+                        <label class="custom-file-label">
+                            <InputFile OnChange="OnImageUpload" />
+                            Choose File
+                        </label>
+                        @if (!string.IsNullOrEmpty(NewTask.ImageUrl))
+                        {
+                            <span class="file-chosen-text">✔️ Uploaded</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-success" type="submit">💾 Save</button>
+                    <button class="btn btn-secondary" type="button" @onclick="CancelForm">❌ Cancel</button>
+                </div>
             </div>
-        </div>
-    }
+        }
 
-    @if (Tasks == null)
-    {
-        <p>Loading tasks...</p>
-    }
-    else if (!Tasks.Any())
-    {
-        <p class="text-warning">⚠️ No tasks found for this subtopic.</p>
-    }
-    else
-    {
-        <div class="tasks-table-wrapper">
-            <table class="tasks-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Question</th>
-                        <th>Type</th>
-                        <th>Hint</th>
-                        <th>Correct Answer</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var task in Tasks)
-                    {
-                        <tr>
-                            <td>@task.Id</td>
-                            <td>@task.Question</td>
-                            <td>@task.TaskType.ToString().Replace("OneAnswerTest", "1 Answer Test")</td>
-                            <td>@(string.IsNullOrEmpty(task.SolutionHint) ? "-" : task.SolutionHint)</td>
-                            <td>@task.CorrectAnswer</td>
-                            <td>
-                                <button class="btn-sm btn-warning" @onclick="() => EditTask(task)">Edit</button>
-                                <button class="btn-sm btn-danger" @onclick="() => DeleteTask(task.Id)">Delete</button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-</div>
+        @if (Tasks?.Count > 0)
+        {
+            <div class="task-list-wrapper">
+                @foreach (var task in Tasks)
+                {
+                    <div class="task-card clickable" @onclick="() => OpenTaskPage(task.Id)">
+                        <div class="task-title">
+                            <i class="bi bi-journal-text task-icon"></i> @task.Question
+                        </div>
+                        <div class="task-meta">
+                            <span>Type: @task.TaskType.ToString().Replace("OneAnswerTest", "1 Answer Test")</span>
+                            <span>Hint: @(string.IsNullOrWhiteSpace(task.SolutionHint) ? "None" : task.SolutionHint)</span>
+                            <span>Answer: @task.CorrectAnswer</span>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-sm btn-warning" @onclick:stopPropagation="true" @onclick="() => EditTask(task)">✏️ Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick:stopPropagation="true" @onclick="() => DeleteTask(task.Id)">🗑️ Delete</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (Tasks != null)
+        {
+            <p class="text-warning empty-task-note">⚠️ No tasks found for this subtopic.</p>
+        }
+    </div>
+</EditForm>
 
 @code {
-    [Parameter]
-    public int SubTopicId { get; set; }
+    [Parameter] public int SubTopicId { get; set; }
 
     private List<StudyTask> Tasks = new();
     private string SubTopicTitle = "Tasks";
@@ -93,14 +145,18 @@
         await LoadTasks();
     }
 
-    private async Task LoadTasks()
-    {
+    private async Task LoadTasks() =>
         Tasks = (await TaskService.GetBySubTopicIdAsync(SubTopicId)).ToList();
-    }
 
     private void ShowAddForm()
     {
-        NewTask = new StudyTask { Question = string.Empty, SubTopicId = SubTopicId };
+        NewTask = new StudyTask
+            {
+                Question = string.Empty,
+                TaskType = TaskType.OpenEnded,
+                SubTopicId = SubTopicId,
+                Options = new List<TaskOption>()
+            };
         showForm = true;
         isEdit = false;
     }
@@ -112,9 +168,10 @@
                 Id = task.Id,
                 Question = task.Question,
                 TaskType = task.TaskType,
-                SolutionHint = task.SolutionHint,
                 CorrectAnswer = task.CorrectAnswer,
-                SubTopicId = SubTopicId
+                SolutionHint = task.SolutionHint,
+                SubTopicId = task.SubTopicId,
+                Options = task.Options?.ToList() ?? new()
             };
         showForm = true;
         isEdit = true;
@@ -122,6 +179,9 @@
 
     private async Task SaveTask()
     {
+        if ((NewTask.TaskType != TaskType.OpenEnded && !OptionsValid()))
+            return;
+
         if (isEdit)
             await TaskService.UpdateAsync(NewTask);
         else
@@ -137,8 +197,52 @@
         await LoadTasks();
     }
 
-    private void CancelForm()
+    private void CancelForm() => showForm = false;
+
+    private void AddOption() => NewTask.Options.Add(new TaskOption());
+
+    private void RemoveOption(TaskOption option) => NewTask.Options.Remove(option);
+
+    private void SetSingleCorrect(TaskOption selected)
     {
-        showForm = false;
+        foreach (var o in NewTask.Options)
+            o.IsCorrect = false;
+        selected.IsCorrect = true;
+    }
+
+    private void HandleTaskTypeChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<TaskType>(e.Value?.ToString(), out var result))
+        {
+            NewTask.TaskType = result;
+            NewTask.Options ??= new();
+
+            if (result == TaskType.OpenEnded)
+                NewTask.Options.Clear();
+        }
+    }
+
+    private bool OptionsValid()
+    {
+        if (NewTask.Options == null || !NewTask.Options.Any(o => !string.IsNullOrWhiteSpace(o.Text)))
+            return false;
+
+        return NewTask.TaskType switch
+        {
+            TaskType.OneAnswerTest => NewTask.Options.Count(o => o.IsCorrect) == 1,
+            TaskType.MultipleChoice => NewTask.Options.Any(o => o.IsCorrect),
+            _ => true
+        };
+    }
+
+    private async Task OnImageUpload(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+            NewTask.ImageUrl = await FileService.SaveTaskImageAsync(e.File);
+    }
+
+    private void OpenTaskPage(int id)
+    {
+        Navigation.NavigateTo($"/task/{id}");
     }
 }

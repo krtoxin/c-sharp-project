@@ -18,6 +18,8 @@ namespace StudyBuddy.Core.Entities
 
         public TaskType TaskType { get; set; } = TaskType.OpenEnded;
 
+        public string? ImageUrl { get; set; }
+
         public List<TaskOption> Options { get; set; } = new();
         public List<ChatMessage> MessagesWhereAttached { get; set; } = new();
     }
