@@ -1,0 +1,83 @@
+﻿@page "/chat/{RoomId:int}"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject NavigationManager Navigation
+@inject ProtectedLocalStorage _localStorage
+@inject AuthenticationStateProvider AuthProvider
+
+<h3>Чат кімната @RoomId</h3>
+
+@if (connection == null)
+{
+    <p>Підключення...</p>
+}
+else
+{
+    <div class="chat-box">
+        @foreach (var msg in Messages)
+        {
+            <div><strong>@msg.Sender:</strong> @msg.Content</div>
+        }
+
+        <input @bind="NewMessage" @bind:event="oninput" placeholder="Введіть повідомлення..." class="form-control" />
+        <button class="btn btn-primary mt-2" @onclick="SendMessage">Надіслати</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int RoomId { get; set; }
+
+    private HubConnection? connection;
+    private string? NewMessage;
+    private List<ChatMessageDto> Messages = new();
+    private string CurrentUserId = "";
+    private string AccessToken = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var session = await _localStorage.GetAsync<StudyBuddy.Core.DTOs.AuthResultDto>("sessionState");
+        AccessToken = session.Success ? session.Value.Token : "";
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        CurrentUserId = authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? authState.User?.FindFirst("nameid")?.Value
+                     ?? "unknown";
+
+        connection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/chatHub"), options =>
+            {
+                options.AccessTokenProvider = () => Task.FromResult(AccessToken);
+            })
+            .Build();
+
+        connection.On<string, string, string>("NewMessage", (message, taskId, senderId) =>
+        {
+            Messages.Add(new ChatMessageDto
+                {
+                    Content = message,
+                    Sender = senderId
+                });
+            StateHasChanged();
+        });
+
+        await connection.StartAsync();
+        await connection.InvokeAsync("JoinChat", RoomId);
+    }
+
+    private async Task SendMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(NewMessage))
+        {
+            await connection!.InvokeAsync("SendMessage", RoomId, NewMessage, null);
+            NewMessage = "";
+        }
+    }
+
+    private class ChatMessageDto
+    {
+        public string Sender { get; set; } = "";
+        public string Content { get; set; } = "";
+    }
+}

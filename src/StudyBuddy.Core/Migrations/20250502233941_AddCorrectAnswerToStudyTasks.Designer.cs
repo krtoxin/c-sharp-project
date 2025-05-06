@@ -12,8 +12,8 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250418052726_AddRefreshTokenOnly")]
-    partial class AddRefreshTokenOnly
+    [Migration("20250502233941_AddCorrectAnswerToStudyTasks")]
+    partial class AddCorrectAnswerToStudyTasks
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -186,6 +186,10 @@ namespace StudyBuddy.Core.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CorrectAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Question")
                         .IsRequired()

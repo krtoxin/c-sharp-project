@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using StudyBuddy.Core.Data;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
@@ -13,6 +13,7 @@ using StudyBuddy.Services.Security;
 using StudyBuddyWebBlazor.Services;
 using StudyBuddy.Repositories;
 using Blazored.LocalStorage;
+using StudyBuddy.Core.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -29,8 +30,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     })
     .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
     {
-        options.ClientId = configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = configuration["Authentication:Google:ClientSecret"];
+        options.ClientId = configuration["Authentication:Google:ClientId"]!;
+        options.ClientSecret = configuration["Authentication:Google:ClientSecret"]!;
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     });
 
@@ -42,6 +43,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ISubTopicRepository, SubTopicRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IChatRoomRepository, ChatRoomRepository>();
+builder.Services.AddScoped<IChatRoomMemberRepository, ChatRoomMemberRepository>();
 
 
 builder.Services.AddScoped<ISubTopicService, SubTopicService>();
@@ -51,7 +54,10 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IUserService, UserService>(); 
-builder.Services.AddScoped<IEmailService, EmailService>(); 
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IChatRoomService, ChatRoomService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ITaskAttemptService, TaskAttemptService>();
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
@@ -80,6 +86,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.MapHub<ChatHub>("/chatHub");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
