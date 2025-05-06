@@ -13,6 +13,7 @@ using StudyBuddy.Services.Security;
 using StudyBuddyWebBlazor.Services;
 using StudyBuddy.Repositories;
 using Blazored.LocalStorage;
+using StudyBuddy.Core.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -85,6 +86,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.MapHub<ChatHub>("/chatHub");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
