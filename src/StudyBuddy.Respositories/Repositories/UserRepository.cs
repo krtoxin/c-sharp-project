@@ -49,6 +49,10 @@ namespace StudyBuddy.Repositories.Repositories
         {
             return await _dbSet.AnyAsync(u => u.Id == userId);
         }
+        public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _dbSet.ToListAsync();
+        }
 
     }
 }

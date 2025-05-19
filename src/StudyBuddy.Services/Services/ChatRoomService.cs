@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Core.Enums;
 using StudyBuddy.Repositories.Interfaces;
-using StudyBuddy.Repositories.Repositories;
 using StudyBuddy.Services.IServices;
 
 namespace StudyBuddy.Services.Services
@@ -17,11 +15,13 @@ namespace StudyBuddy.Services.Services
         private readonly IChatRoomMemberRepository _memberRepo;
         private readonly IUserRepository _userRepository;
 
-        public ChatRoomService(IChatRoomRepository repo, IChatRoomMemberRepository memberRepo, IUserRepository userRepository)
+        public ChatRoomService(
+            IChatRoomRepository repo,
+            IChatRoomMemberRepository memberRepo,
+            IUserRepository userRepository)
         {
             _repo = repo;
             _memberRepo = memberRepo;
-            _userRepository = userRepository;
             _userRepository = userRepository;
         }
 
@@ -30,31 +30,58 @@ namespace StudyBuddy.Services.Services
             return await _repo.GetRoomsForUserAsync(userId);
         }
 
-        public async Task<int> CreateRoomAsync(ChatRoom room, string creatorId)
+        public async Task<int> CreateRoomWithMembersAsync(ChatRoom room, List<string> memberUserIds)
         {
             room.CreatedAt = DateTime.UtcNow;
 
             await _repo.AddAsync(room);
             await _repo.SaveAsync();
 
-            var isUserExists = await _userRepository.ExistsAsync(creatorId);
-            Console.WriteLine($"DEBUG: user exists = {isUserExists}"); // ← Ось сюди вставляєш
+            if (memberUserIds == null || memberUserIds.Count == 0)
+                throw new ArgumentException("At least one member must be specified.");
 
-            if (!isUserExists)
-                throw new Exception("User ID not found — Google login might have failed.");
+            // First user in list will be Admin by default
+            var adminUserId = memberUserIds[0];
 
-            var member = new ChatRoomMember
+            foreach (var userId in memberUserIds)
             {
-                ChatRoomId = room.Id,
-                UserId = creatorId,
-                Role = ChatRole.Admin
-            };
+                var exists = await _userRepository.ExistsAsync(userId);
+                if (!exists)
+                    throw new Exception($"User ID {userId} not found.");
 
-            await _memberRepo.AddAsync(member);
+                var member = new ChatRoomMember
+                {
+                    ChatRoomId = room.Id,
+                    UserId = userId,
+                    Role = (userId == adminUserId) ? ChatRole.Admin : ChatRole.Member
+                };
+
+                await _memberRepo.AddAsync(member);
+            }
+
             await _repo.SaveAsync();
 
             return room.Id;
         }
 
+        public async Task<ChatRoom> GetOrCreateRoomForTaskAsync(int taskId, string creatorId)
+        {
+            var existingRooms = await _repo.FindAsync(r => r.TaskId == taskId);
+
+            if (existingRooms.Any())
+                return existingRooms.First();
+
+            var newRoom = new ChatRoom
+            {
+                TaskId = taskId,
+                Name = $"Chat for Task #{taskId}",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var roomId = await CreateRoomWithMembersAsync(newRoom, new List<string> { creatorId });
+
+            // Assuming your repo has GetByIdAsync method to get the entity by Id
+            return await _repo.GetByIdAsync(roomId);
+        }
     }
 }

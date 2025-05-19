@@ -1,0 +1,160 @@
+﻿@page "/chats"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Core.DTOs
+@using StudyBuddy.Services.IServices
+@using StudyBuddyWebBlazor.Components.Forms
+@inject IChatRoomService ChatRoomService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+
+<h3 class="mb-3 d-flex justify-content-between align-items-center">
+    <span>💬 Your Chats</span>
+    <button class="btn btn-primary btn-sm" @onclick="ShowCreateGroupModal">+ New Chat</button>
+</h3>
+
+@if (showCreateGroupModal)
+{
+    <CreateGroupChatModal IsVisible="@showCreateGroupModal"
+                          IsVisibleChanged="@(visible => showCreateGroupModal = visible)"
+                          OnGroupCreated="OnChatCreated" />
+}
+
+<input class="form-control mb-3" placeholder="Search chats..." @bind="SearchText" @bind:event="oninput" />
+
+@if (filteredChatRooms is null)
+{
+    <p>Loading chat rooms...</p>
+}
+else if (!filteredChatRooms.Any())
+{
+    <p>No chats match your search.</p>
+}
+else
+{
+    <div class="chat-list">
+        @foreach (var room in filteredChatRooms)
+        {
+            <div class="chat-list-item" @onclick="() => OpenRoom(room.Id)" title="@room.Name">
+                <div class="avatar">@GetAvatarInitial(room.Name)</div>
+                <div class="chat-info">
+                    <div class="chat-header">
+                        <strong>@room.Name</strong>
+                        <span class="timestamp">@room.CreatedAt.ToLocalTime().ToString("HH:mm")</span>
+                    </div>
+                    <div class="chat-preview">
+                        <em>Last message preview...</em> <!-- Replace with real last message -->
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ChatRoomDto> ChatRooms = new();
+    private List<ChatRoomDto> filteredChatRooms = new();
+    private bool showCreateGroupModal = false;
+
+    private string searchTextBacking = "";
+    private string SearchText
+    {
+        get => searchTextBacking;
+        set
+        {
+            if (searchTextBacking != value)
+            {
+                searchTextBacking = value;
+                FilterChats();
+            }
+        }
+    }
+
+    public class ChatRoomDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChatRooms();
+    }
+
+    private async Task LoadChatRooms()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user?.FindFirst("nameid")?.Value ?? user?.FindFirst("id")?.Value ?? "";
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var rooms = await ChatRoomService.GetRoomsForUserAsync(userId);
+
+            ChatRooms = rooms.Select(r => new ChatRoomDto
+                {
+                    Id = r.Id,
+                    Name = r.Name,
+                    CreatedAt = r.CreatedAt
+                }).ToList();
+
+            Console.WriteLine($"[DEBUG] Loaded {ChatRooms.Count} chat rooms for user {userId}:");
+            foreach (var room in ChatRooms)
+            {
+                Console.WriteLine($"[DEBUG] - Room Id: {room.Id}, Name: {room.Name}, CreatedAt: {room.CreatedAt}");
+            }
+
+            FilterChats();
+
+            Console.WriteLine($"[DEBUG] After filtering, {filteredChatRooms.Count} chat rooms visible.");
+            foreach (var room in filteredChatRooms)
+            {
+                Console.WriteLine($"[DEBUG] - Visible Room Id: {room.Id}, Name: {room.Name}");
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            Console.WriteLine("[DEBUG] No valid userId found for loading chat rooms.");
+        }
+    }
+
+
+    private void FilterChats()
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            filteredChatRooms = ChatRooms;
+        }
+        else
+        {
+            filteredChatRooms = ChatRooms
+                .Where(r => r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+
+    private void OpenRoom(int roomId)
+    {
+        Navigation.NavigateTo($"/chat/{roomId}");
+    }
+
+    private string GetAvatarInitial(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        return name.Substring(0, 1).ToUpper();
+    }
+
+    private void ShowCreateGroupModal() => showCreateGroupModal = true;
+
+    private async Task OnChatCreated(int newRoomId)
+    {
+        showCreateGroupModal = false;
+        searchTextBacking = "";  
+        await LoadChatRooms();
+        Navigation.NavigateTo($"/chat/{newRoomId}");
+    }
+
+}

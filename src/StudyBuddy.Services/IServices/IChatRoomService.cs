@@ -10,7 +10,7 @@ namespace StudyBuddy.Services.IServices
     public interface IChatRoomService
     {
         Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId);
-        Task<int> CreateRoomAsync(ChatRoom room, string creatorId); 
+        Task<int> CreateRoomWithMembersAsync(ChatRoom room, List<string> memberUserIds);
+        Task<ChatRoom> GetOrCreateRoomForTaskAsync(int taskId, string creatorId);
     }
-
 }

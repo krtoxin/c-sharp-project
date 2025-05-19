@@ -117,5 +117,10 @@ namespace StudyBuddy.Services.Services
             return (await _subTopicRepo.GetBySubjectIdAsync(subjectId)).ToList();
         }
 
+        public async Task<IEnumerable<StudyTask>> GetAllTasksAsync()
+        {
+            return await _taskRepo.GetAllAsync();
+        }
+
     }
 }

@@ -50,9 +50,12 @@
                     </NavLink>
                 }
 
-                <NavLink href="/rooms" class="nav-link" activeClass="active">
-                    <i class="bi bi-collection"></i> Rooms
-                </NavLink>
+                @if (IsInRole("User") || IsInRole("Admin") || IsInRole("Manager"))
+                {
+                    <NavLink href="/chats" class="nav-link" activeClass="active">
+                        <i class="bi bi-chat-dots"></i> Chat
+                    </NavLink>
+                }
 
                 <NavLink href="/settings" class="nav-link" activeClass="active">
                     <i class="bi bi-gear"></i> Settings

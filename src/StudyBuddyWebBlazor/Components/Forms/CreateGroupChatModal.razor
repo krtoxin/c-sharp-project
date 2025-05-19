@@ -1,0 +1,130 @@
+﻿@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IUserService UserService
+@inject IStudyTaskService StudyTaskService
+@inject IChatRoomService ChatRoomService
+
+@if (IsVisible)
+{
+    <div class="modal-backdrop" @onclick="Close"></div>
+
+    <div class="modal-container" @onclick:stopPropagation>
+        <div class="modal-header">
+            <h5>Create New Group Chat</h5>
+            <button class="close-btn" @onclick="Close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <label>Group Name</label>
+            <input class="form-control" @bind="GroupName" placeholder="Enter group name" />
+
+            <label class="mt-3">Add Users</label>
+            <input class="form-control" placeholder="Search users..." @bind="UserSearchTerm" @bind:event="oninput" />
+
+            <div class="user-search-results">
+                @if (FilteredUsers.Any())
+                {
+                    @foreach (var user in FilteredUsers)
+                    {
+                        <div class="user-item" @onclick="() => ToggleUserSelection(user)">
+                            <input type="checkbox" checked="@SelectedUsers.Contains(user)" />
+                            <span>@user.FullName (@user.Email)</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div>No users found</div>
+                }
+            </div>
+
+            <div class="form-check mt-3">
+                <input type="checkbox" class="form-check-input" id="attachTask" @bind="AttachTask" />
+                <label class="form-check-label" for="attachTask">Attach to Task</label>
+            </div>
+
+            @if (AttachTask)
+            {
+                <label class="mt-2">Select Task</label>
+                <select class="form-select" @bind="SelectedTaskId">
+                    <option value="">-- Select a task --</option>
+                    @foreach (var task in Tasks)
+                    {
+                        <option value="@task.Id">@task.Question</option>
+                    }
+                </select>
+            }
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+            <button class="btn btn-primary" @onclick="CreateGroupChat" disabled="@IsCreateDisabled">Next</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback<int> OnGroupCreated { get; set; }
+
+    private string GroupName { get; set; } = "";
+    private List<User> AllUsers = new();
+    private string UserSearchTerm { get; set; } = "";
+    private HashSet<User> SelectedUsers { get; set; } = new();
+    private bool AttachTask { get; set; } = false;
+    private List<StudyTask> Tasks = new();
+    private int? SelectedTaskId { get; set; }
+
+    private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(UserSearchTerm)
+        ? AllUsers
+        : AllUsers.Where(u => u.FullName.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase)
+                           || u.Email.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private bool IsCreateDisabled =>
+        string.IsNullOrWhiteSpace(GroupName) || SelectedUsers.Count == 0 || (AttachTask && SelectedTaskId == null);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible)
+        {
+            AllUsers = (await UserService.GetAllUsersAsync()).ToList();
+            Tasks = (await StudyTaskService.GetAllTasksAsync()).ToList();
+            SelectedUsers.Clear();
+            GroupName = "";
+            UserSearchTerm = "";
+            AttachTask = false;
+            SelectedTaskId = null;
+        }
+    }
+
+    private void ToggleUserSelection(User user)
+    {
+        if (SelectedUsers.Contains(user))
+            SelectedUsers.Remove(user);
+        else
+            SelectedUsers.Add(user);
+    }
+
+    private async Task CreateGroupChat()
+    {
+        var chatRoom = new ChatRoom
+            {
+                Name = GroupName,
+                IsGroup = true,
+                TaskId = AttachTask ? SelectedTaskId : null,
+                CreatedAt = DateTime.UtcNow
+            };
+
+        // Call service method to create group chat with all selected members
+        var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(chatRoom, SelectedUsers.Select(u => u.Id).ToList());
+
+        await OnGroupCreated.InvokeAsync(newRoomId);
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        await IsVisibleChanged.InvokeAsync(false);
+    }
+}

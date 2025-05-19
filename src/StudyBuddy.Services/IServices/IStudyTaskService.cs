@@ -17,6 +17,8 @@ namespace StudyBuddy.Services.IServices
         Task DeleteAsync(int id);
         Task<List<SubTopic>> GetAllSubTopicsAsync();
         Task<List<SubTopic>> GetSubTopicsBySubjectIdAsync(int subjectId);
+        Task<IEnumerable<StudyTask>> GetAllTasksAsync();
+
 
     }
 }

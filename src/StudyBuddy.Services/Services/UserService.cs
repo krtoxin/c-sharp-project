@@ -62,5 +62,10 @@ namespace StudyBuddy.Services.Services
             await _userRepository.AddAsync(user);
         }
 
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            return await _userRepository.GetAllAsync();
+        }
+
     }
 }
