@@ -10,26 +10,37 @@ namespace StudyBuddy.Core.Hubs
             var senderId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
                         ?? Context.User?.FindFirst("nameid")?.Value;
 
+            Console.WriteLine($"🟢 Hub Received: {message} from {senderId}");
+
             if (string.IsNullOrEmpty(senderId))
+            {
+                Console.WriteLine("❌ SenderId is null");
                 return;
+            }
 
             await Clients.Group(chatId.ToString())
-                .SendAsync("NewMessage", message, taskId, senderId);
+                .SendAsync("NewMessage", message, taskId?.ToString() ?? "", senderId);
         }
 
         public async Task JoinChat(int chatId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, chatId.ToString());
-
-            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                      ?? Context.User?.FindFirst("nameid")?.Value;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                await Clients.Group(chatId.ToString())
-                    .SendAsync("UserJoined", userId);
-            }
         }
+
+
+        //public async Task JoinChat(int chatId)
+        //{
+        //    await Groups.AddToGroupAsync(Context.ConnectionId, chatId.ToString());
+
+        //    var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        //              ?? Context.User?.FindFirst("nameid")?.Value;
+
+        //    if (!string.IsNullOrEmpty(userId))
+        //    {
+        //        await Clients.Group(chatId.ToString())
+        //            .SendAsync("UserJoined", userId);
+        //    }
+        //}
 
         public async Task UpdateOnlineStatus(bool isOnline)
         {

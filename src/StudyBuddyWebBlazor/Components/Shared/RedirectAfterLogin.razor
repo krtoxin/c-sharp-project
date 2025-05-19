@@ -1,19 +1,48 @@
-﻿@inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthProvider
+﻿@page "/redirect-after-login"
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using StudyBuddy.Core.DTOs
+@inject ProtectedLocalStorage LocalStorage
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider AuthProvider
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "data")]
+    public string? EncodedResult { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        Console.WriteLine("✅ RedirectAfterLogin hit"); // ← це критично
 
-        if (!user.Identity?.IsAuthenticated ?? true)
+        if (string.IsNullOrEmpty(EncodedResult))
         {
-            Navigation.NavigateTo("/login", true);
+            Console.WriteLine("❌ No data in redirect");
+            Navigation.NavigateTo("/login");
+            return;
         }
-        else
+
+        try
         {
-            Navigation.NavigateTo("/dashboard", true); 
+            var json = Uri.UnescapeDataString(EncodedResult);
+            var result = JsonSerializer.Deserialize<AuthResultDto>(json);
+
+            if (result is not null && result.IsSuccess)
+            {
+                await AuthProvider.MarkUserAsAuthenticated(result);
+                Console.WriteLine("✅ Token stored, redirecting...");
+                Navigation.NavigateTo("/dashboard", true);
+            }
+            else
+            {
+                Console.WriteLine("❌ Invalid result");
+                Navigation.NavigateTo("/login", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Exception: {ex.Message}");
+            Navigation.NavigateTo("/login", true);
         }
     }
 }

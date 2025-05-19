@@ -7,6 +7,7 @@ using StudyBuddy.Services.IServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.Google;
 using StudyBuddyWebBlazor.Services;
+using System.Security.Claims;
 
 namespace StudyBuddyWebBlazor.Controllers
 {
@@ -68,8 +69,6 @@ namespace StudyBuddyWebBlazor.Controllers
                 TokenExpired = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds()
             });
         }
-
-
 
 
         [HttpGet("login-by-refresh")]
@@ -138,6 +137,71 @@ namespace StudyBuddyWebBlazor.Controllers
         {
             var result = await _userService.ResetPasswordAsync(model.Email, model.Code, model.NewPassword);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpGet("/auth/google-callback")]
+        public async Task<IActionResult> GoogleCallback()
+        {
+            var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            if (!authenticateResult.Succeeded || authenticateResult.Principal == null)
+            {
+                return Redirect("/login");
+            }
+
+            var email = authenticateResult.Principal.FindFirst(ClaimTypes.Email)?.Value;
+            var name = authenticateResult.Principal.FindFirst(ClaimTypes.Name)?.Value ?? "GoogleUser";
+            var username = email?.Split('@')[0] ?? "unknown";
+
+            if (string.IsNullOrEmpty(email))
+                return BadRequest("Email not found in Google login");
+
+            var user = await _userService.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Email = email,
+                    UserName = username,
+                    FullName = name,
+                    PasswordHash = "", // не потрібно
+                    RoleId = 3, // звичайний User
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _userService.CreateUserAsync(user);
+                user = await _userService.FindByEmailAsync(email); 
+
+            }
+
+            var roles = new List<string> { user.Role?.Name ?? "User" };
+            var accessToken = _jwtTokenGenerator.GenerateToken(user, roles);
+            var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user);
+
+            await _authService.AddRefreshTokenAsync(new RefreshToken
+            {
+                Token = refreshToken,
+                UserId = user.Id,
+                ExpiryDate = DateTime.UtcNow.AddDays(1)
+            });
+
+            var result = new AuthResultDto
+            {
+                IsSuccess = true,
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                TokenExpired = DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds()
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(result);
+            var encoded = Uri.EscapeDataString(json);
+
+            Console.WriteLine("🟢 GoogleCallback HIT");
+            return Redirect($"/redirect-after-login?data={encoded}");
+
+
         }
 
     }

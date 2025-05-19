@@ -1,9 +1,31 @@
-﻿@inject NavigationManager Navigation
+﻿@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using StudyBuddy.Core.DTOs
+@inject ProtectedLocalStorage LocalStorage
+@inject NavigationManager Navigation
+@inject CustomAuthenticationStateProvider AuthProvider
 
 @code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "data")]
+    public string? EncodedResult { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
+        if (string.IsNullOrEmpty(EncodedResult))
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+        var json = Uri.UnescapeDataString(EncodedResult);
+        var result = JsonSerializer.Deserialize<AuthResultDto>(json);
+
+        if (result is not null && result.IsSuccess)
+        {
+            await AuthProvider.MarkUserAsAuthenticated(result);
+            Navigation.NavigateTo("/dashboard", true);
+        }
+        else
         {
             Navigation.NavigateTo("/login", true);
         }

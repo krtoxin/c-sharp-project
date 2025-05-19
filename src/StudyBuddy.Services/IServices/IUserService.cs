@@ -13,5 +13,7 @@ namespace StudyBuddy.Services.IServices
         Task<User?> FindByEmailAsync(string email);
         Task<string> GenerateResetCodeAsync(User user);
         Task<ApiResult> ResetPasswordAsync(string email, string code, string newPassword);
+        Task CreateUserAsync(User user);
+
     }
 }

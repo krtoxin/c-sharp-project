@@ -57,5 +57,10 @@ namespace StudyBuddy.Services.Services
 
             return ApiResult.Success();
         }
+        public async Task CreateUserAsync(User user)
+        {
+            await _userRepository.AddAsync(user);
+        }
+
     }
 }

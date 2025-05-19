@@ -61,6 +61,8 @@ else
 
         @if (ShowCreateForm)
         {
+            <p><strong>Current user ID:</strong> @currentUserId</p>
+
             <EditForm Model="newRoom" OnValidSubmit="CreateRoom">
                 <div class="card card-body mt-4">
                     <h5>Create a New Room</h5>
@@ -76,7 +78,7 @@ else
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Create Room</button>
+                        <button type="submit" class="btn btn-primary" disabled="@string.IsNullOrWhiteSpace(newRoom.Name)">Create Room</button>
                         <button type="button" class="btn btn-secondary" @onclick="() => ShowCreateForm = false">Cancel</button>
                     </div>
                 </div>
@@ -94,18 +96,22 @@ else
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthProvider.GetAuthenticationStateAsync();
-        currentUserId = auth.User.FindFirst("id")?.Value ?? "";
+        currentUserId = auth.User.FindFirst("nameid")?.Value
+                     ?? auth.User.FindFirst("id")?.Value
+                     ?? "";
 
         rooms = (await ChatRoomService.GetRoomsForUserAsync(currentUserId)).ToList();
     }
 
     private async Task CreateRoom()
     {
-        await ChatRoomService.CreateRoomAsync(newRoom, currentUserId);
+        var newId = await ChatRoomService.CreateRoomAsync(newRoom, currentUserId);
         ShowCreateForm = false;
-        rooms = (await ChatRoomService.GetRoomsForUserAsync(currentUserId)).ToList();
         newRoom = new();
+
+        Nav.NavigateTo($"/chat/{newId}");
     }
+
 
     private void EnterRoom(int roomId)
     {
