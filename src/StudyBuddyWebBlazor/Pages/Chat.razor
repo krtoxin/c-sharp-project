@@ -6,11 +6,15 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.SignalR.Client
 @using StudyBuddy.Core.DTOs
-
+@using StudyBuddy.Services.IServices
+@using StudyBuddy.Services.Services
+@inject IChatRoomService ChatRoomService
 @inject NavigationManager Navigation
 @inject ProtectedLocalStorage _localStorage
 @inject AuthenticationStateProvider AuthProvider
 @inject IJSRuntime JS
+@inject ChatStateService ChatState
+@implements IDisposable
 
 <h3>Чат кімната @RoomId</h3>
 
@@ -26,8 +30,8 @@ else
         <div class="messages" @ref="messagesDiv">
             @foreach (var msg in Messages)
             {
-                <div class="message @(msg.Sender == CurrentUserId ? "mine" : "theirs")">
-                    <strong>@(msg.Sender == CurrentUserId ? "Ви" : msg.Sender):</strong> @msg.Content
+                <div class="message @(msg.SenderId == CurrentUserId ? "mine" : "theirs")">
+                    <strong>@(msg.SenderId == CurrentUserId ? "Ви" : msg.SenderName):</strong> @msg.Content
                 </div>
             }
         </div>
@@ -44,27 +48,47 @@ else
 
     private HubConnection? connection;
     private string? NewMessage;
-    private List<ChatMessageDto> Messages = new();
     private string CurrentUserId = "";
     private string AccessToken = "";
+    private bool _disposed = false;
 
     private ElementReference messagesDiv;
 
-    protected override async Task OnInitializedAsync()
-    {
-        var session = await _localStorage.GetAsync<AuthResultDto>("sessionState");
-        AccessToken = (session.Success && session.Value is not null) ? session.Value.Token : "";
-        Console.WriteLine($"AccessToken length: {AccessToken?.Length ?? 0}");
+    private List<ChatMessageDto> Messages => ChatState.GetMessages(RoomId);
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_disposed)
+            return;
+
+        // Clear old messages for the new room to prevent duplicates
+        ChatState.ClearMessages(RoomId);
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        CurrentUserId = user?.FindFirst("nameid")?.Value ?? user?.FindFirst("id")?.Value ?? "unknown";
+
+        AccessToken = user?.Claims.FirstOrDefault(c => c.Type == "access_token")?.Value ?? "";
+        if (string.IsNullOrWhiteSpace(AccessToken))
+        {
+            var session = await _localStorage.GetAsync<AuthResultDto>("sessionState");
+            AccessToken = (session.Success && session.Value is not null) ? session.Value.Token : "";
+        }
+
+        Console.WriteLine($"AccessToken length: {AccessToken?.Length ?? 0}");
         if (string.IsNullOrWhiteSpace(AccessToken))
         {
             Console.WriteLine("❌ AccessToken is missing — user may not be authenticated.");
             return;
         }
 
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        CurrentUserId = user?.FindFirst("nameid")?.Value ?? user?.FindFirst("id")?.Value ?? "unknown";
+        // Load existing messages from server via service
+        var existingMessages = await ChatRoomService.GetMessagesForRoomAsync(RoomId);
+        foreach (var msg in existingMessages.OrderBy(m => m.SentAt))
+        {
+            ChatState.AddMessage(RoomId, msg);
+        }
 
         connection = new HubConnectionBuilder()
             .WithUrl(Navigation.ToAbsoluteUri("/chatHub"), options =>
@@ -76,10 +100,11 @@ else
 
         connection.On<string, string, string>("NewMessage", async (message, taskId, senderId) =>
         {
-            Messages.Add(new ChatMessageDto
+            ChatState.AddMessage(RoomId, new ChatMessageDto
                 {
                     Content = message,
-                    Sender = senderId
+                    SenderId = senderId,
+                    SenderName = senderId // replace with real name if you have it
                 });
 
             await InvokeAsync(StateHasChanged);
@@ -104,40 +129,44 @@ else
             Console.WriteLine("❌ Cannot send: no active SignalR connection.");
             return;
         }
-
         if (string.IsNullOrWhiteSpace(NewMessage))
-        {
             return;
-        }
 
         await connection.InvokeAsync("SendMessage", RoomId, NewMessage, null);
         NewMessage = "";
-
         await ScrollToBottom();
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(NewMessage))
-        {
             await SendMessage();
-        }
     }
 
     private async Task ScrollToBottom()
     {
         await Task.Delay(50);
-        if (messagesDiv.Context != null)  
+        if (!_disposed && messagesDiv.Context != null)
         {
-            await messagesDiv.FocusAsync();
-            await JS.InvokeVoidAsync("blazorHelpers.scrollToBottom", messagesDiv);
+            try
+            {
+                await JS.InvokeVoidAsync("blazorHelpers.scrollToBottom", messagesDiv);
+            }
+            catch (JSDisconnectedException)
+            {
+                // Ignore - user disconnected or circuit disposed
+            }
         }
     }
 
-
-    private class ChatMessageDto
+    public void Dispose()
     {
-        public string Sender { get; set; } = "";
-        public string Content { get; set; } = "";
+        _disposed = true;
+
+        if (connection != null)
+        {
+            _ = connection.DisposeAsync();
+            connection = null;
+        }
     }
 }

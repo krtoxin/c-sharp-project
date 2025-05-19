@@ -26,8 +26,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // "Bearer"
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; // "Bearer"
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; 
 })
 .AddCookie(options =>
 {
@@ -85,6 +85,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IChatRoomRepository, ChatRoomRepository>();
 builder.Services.AddScoped<IChatRoomMemberRepository, ChatRoomMemberRepository>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
 
 
 builder.Services.AddScoped<ISubTopicService, SubTopicService>();
@@ -98,6 +99,8 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IChatRoomService, ChatRoomService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ITaskAttemptService, TaskAttemptService>();
+builder.Services.AddScoped<ChatStateService>();
+
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
@@ -132,7 +135,10 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<ChatHub>("/chatHub").RequireAuthorization();
+app.MapHub<ChatHub>("/chatHub").RequireAuthorization(new AuthorizeAttribute
+{
+    AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+});
 
 
 app.MapControllers();

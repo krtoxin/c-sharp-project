@@ -1,4 +1,5 @@
-﻿using StudyBuddy.Core.Entities;
+﻿using StudyBuddy.Core.DTOs;
+using StudyBuddy.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,5 +13,6 @@ namespace StudyBuddy.Services.IServices
         Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId);
         Task<int> CreateRoomWithMembersAsync(ChatRoom room, List<string> memberUserIds);
         Task<ChatRoom> GetOrCreateRoomForTaskAsync(int taskId, string creatorId);
+        Task<IEnumerable<ChatMessageDto>> GetMessagesForRoomAsync(int roomId, int skip = 0, int take = 50);
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using StudyBuddy.Core.DTOs;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Core.Enums;
 using StudyBuddy.Repositories.Interfaces;
@@ -14,15 +15,18 @@ namespace StudyBuddy.Services.Services
         private readonly IChatRoomRepository _repo;
         private readonly IChatRoomMemberRepository _memberRepo;
         private readonly IUserRepository _userRepository;
+        private readonly IChatRepository _chatRepository;
 
         public ChatRoomService(
             IChatRoomRepository repo,
             IChatRoomMemberRepository memberRepo,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IChatRepository chatRepository)
         {
             _repo = repo;
             _memberRepo = memberRepo;
             _userRepository = userRepository;
+            _chatRepository = chatRepository;
         }
 
         public async Task<IEnumerable<ChatRoom>> GetRoomsForUserAsync(string userId)
@@ -40,7 +44,6 @@ namespace StudyBuddy.Services.Services
             if (memberUserIds == null || memberUserIds.Count == 0)
                 throw new ArgumentException("At least one member must be specified.");
 
-            // First user in list will be Admin by default
             var adminUserId = memberUserIds[0];
 
             foreach (var userId in memberUserIds)
@@ -80,8 +83,26 @@ namespace StudyBuddy.Services.Services
 
             var roomId = await CreateRoomWithMembersAsync(newRoom, new List<string> { creatorId });
 
-            // Assuming your repo has GetByIdAsync method to get the entity by Id
             return await _repo.GetByIdAsync(roomId);
+        }
+
+        public async Task<IEnumerable<ChatMessageDto>> GetMessagesForRoomAsync(int roomId, int skip = 0, int take = 50)
+        {
+            var messages = await _chatRepository.GetMessagesForRoomAsync(roomId, skip, take);
+
+            return messages.Select(m => new ChatMessageDto
+            {
+                Id = m.Id,
+                Content = m.Content,
+                SentAt = m.SentAt,
+                IsEdited = m.IsEdited,
+                TaskId = m.TaskId,
+                SenderId = m.SenderId,
+                SenderName = m.Sender.FullName,  
+                ChatRoomId = m.ChatRoomId,
+                AttachmentType = (int)m.AttachmentType,
+                AttachmentUrl = m.AttachmentUrl
+            });
         }
     }
 }

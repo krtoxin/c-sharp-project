@@ -3,6 +3,7 @@
 @inject IUserService UserService
 @inject IStudyTaskService StudyTaskService
 @inject IChatRoomService ChatRoomService
+@inject AuthenticationStateProvider AuthProvider
 
 @if (IsVisible)
 {
@@ -76,6 +77,8 @@
     private List<StudyTask> Tasks = new();
     private int? SelectedTaskId { get; set; }
 
+    private string CurrentUserId = "";
+
     private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(UserSearchTerm)
         ? AllUsers
         : AllUsers.Where(u => u.FullName.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase)
@@ -95,11 +98,19 @@
             UserSearchTerm = "";
             AttachTask = false;
             SelectedTaskId = null;
+
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            CurrentUserId = authState.User?.FindFirst("nameid")?.Value ?? authState.User?.FindFirst("id")?.Value ?? "";
+
+            SelectedUsers.Add(AllUsers.FirstOrDefault(u => u.Id == CurrentUserId)!);
         }
     }
 
     private void ToggleUserSelection(User user)
     {
+        if (user.Id == CurrentUserId)
+            return;
+
         if (SelectedUsers.Contains(user))
             SelectedUsers.Remove(user);
         else
@@ -108,6 +119,11 @@
 
     private async Task CreateGroupChat()
     {
+        var memberIds = SelectedUsers.Select(u => u.Id).ToList();
+
+        if (!memberIds.Contains(CurrentUserId))
+            memberIds.Add(CurrentUserId);
+
         var chatRoom = new ChatRoom
             {
                 Name = GroupName,
@@ -116,8 +132,7 @@
                 CreatedAt = DateTime.UtcNow
             };
 
-        // Call service method to create group chat with all selected members
-        var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(chatRoom, SelectedUsers.Select(u => u.Id).ToList());
+        var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(chatRoom, memberIds);
 
         await OnGroupCreated.InvokeAsync(newRoomId);
         await Close();
