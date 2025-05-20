@@ -11,15 +11,40 @@
 
     <div class="modal-container" @onclick:stopPropagation>
         <div class="modal-header">
-            <h5>Create New Group Chat</h5>
+            <h5>@(IsGroupMode ? "Create Group Chat" : "Create Personal Chat")</h5>
             <button class="close-btn" @onclick="Close">&times;</button>
         </div>
 
         <div class="modal-body">
-            <label>Group Name</label>
-            <input class="form-control" @bind="GroupName" placeholder="Enter group name" />
+            <div class="mb-3 d-flex gap-3">
+                <div class="form-check">
+                    <input type="radio"
+                           class="form-check-input"
+                           name="chatMode"
+                           value="true"
+                           checked="@IsGroupMode"
+                           @onchange="() => IsGroupMode = true" />
+                    <label class="form-check-label">Group</label>
+                </div>
 
-            <label class="mt-3">Add Users</label>
+                <div class="form-check">
+                    <input type="radio"
+                           class="form-check-input"
+                           name="chatMode"
+                           value="false"
+                           checked="@(!IsGroupMode)"
+                           @onchange="() => IsGroupMode = false" />
+                    <label class="form-check-label">Personal</label>
+                </div>
+            </div>
+
+            @if (IsGroupMode)
+            {
+                <label>Group Name</label>
+                <input class="form-control" @bind="GroupName" placeholder="Enter group name" />
+            }
+
+            <label class="mt-3">@((IsGroupMode ? "Add Users" : "Select User"))</label>
             <input class="form-control" placeholder="Search users..." @bind="UserSearchTerm" @bind:event="oninput" />
 
             <div class="user-search-results">
@@ -28,7 +53,7 @@
                     @foreach (var user in FilteredUsers)
                     {
                         <div class="user-item" @onclick="() => ToggleUserSelection(user)">
-                            <input type="checkbox" checked="@SelectedUsers.Contains(user)" />
+                            <input type="checkbox" checked="@SelectedUsers.Contains(user)" disabled="@(!IsGroupMode && SelectedUsers.Any() && !SelectedUsers.Contains(user))" />
                             <span>@user.FullName (@user.Email)</span>
                         </div>
                     }
@@ -39,27 +64,30 @@
                 }
             </div>
 
-            <div class="form-check mt-3">
-                <input type="checkbox" class="form-check-input" id="attachTask" @bind="AttachTask" />
-                <label class="form-check-label" for="attachTask">Attach to Task</label>
-            </div>
-
-            @if (AttachTask)
+            @if (IsGroupMode)
             {
-                <label class="mt-2">Select Task</label>
-                <select class="form-select" @bind="SelectedTaskId">
-                    <option value="">-- Select a task --</option>
-                    @foreach (var task in Tasks)
-                    {
-                        <option value="@task.Id">@task.Question</option>
-                    }
-                </select>
+                <div class="form-check mt-3">
+                    <input type="checkbox" class="form-check-input" id="attachTask" @bind="AttachTask" />
+                    <label class="form-check-label" for="attachTask">Attach to Task</label>
+                </div>
+
+                @if (AttachTask)
+                {
+                    <label class="mt-2">Select Task</label>
+                    <select class="form-select" @bind="SelectedTaskId">
+                        <option value="">-- Select a task --</option>
+                        @foreach (var task in Tasks)
+                        {
+                            <option value="@task.Id">@task.Question</option>
+                        }
+                    </select>
+                }
             }
         </div>
 
         <div class="modal-footer">
             <button class="btn btn-secondary" @onclick="Close">Cancel</button>
-            <button class="btn btn-primary" @onclick="CreateGroupChat" disabled="@IsCreateDisabled">Next</button>
+            <button class="btn btn-primary" @onclick="CreateChat" disabled="@IsCreateDisabled">Next</button>
         </div>
     </div>
 }
@@ -76,8 +104,8 @@
     private bool AttachTask { get; set; } = false;
     private List<StudyTask> Tasks = new();
     private int? SelectedTaskId { get; set; }
-
     private string CurrentUserId = "";
+    private bool IsGroupMode { get; set; } = true;
 
     private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(UserSearchTerm)
         ? AllUsers
@@ -85,7 +113,8 @@
                            || u.Email.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase));
 
     private bool IsCreateDisabled =>
-        string.IsNullOrWhiteSpace(GroupName) || SelectedUsers.Count == 0 || (AttachTask && SelectedTaskId == null);
+        (!IsGroupMode && SelectedUsers.Count != 1) ||
+        (IsGroupMode && (string.IsNullOrWhiteSpace(GroupName) || SelectedUsers.Count < 2 || (AttachTask && SelectedTaskId == null)));
 
     protected override async Task OnParametersSetAsync()
     {
@@ -101,8 +130,6 @@
 
             var authState = await AuthProvider.GetAuthenticationStateAsync();
             CurrentUserId = authState.User?.FindFirst("nameid")?.Value ?? authState.User?.FindFirst("id")?.Value ?? "";
-
-            SelectedUsers.Add(AllUsers.FirstOrDefault(u => u.Id == CurrentUserId)!);
         }
     }
 
@@ -114,7 +141,45 @@
         if (SelectedUsers.Contains(user))
             SelectedUsers.Remove(user);
         else
+        {
+            if (!IsGroupMode)
+                SelectedUsers.Clear();
             SelectedUsers.Add(user);
+        }
+    }
+
+    private async Task CreateChat()
+    {
+        if (IsGroupMode)
+        {
+            await CreateGroupChat();
+        }
+        else
+        {
+            var selected = SelectedUsers.FirstOrDefault();
+            if (selected == null) return;
+
+            var existingRooms = await ChatRoomService.GetRoomsForUserAsync(CurrentUserId);
+            var privateChat = existingRooms.FirstOrDefault(r => !r.IsGroup && r.Members.Any(m => m.UserId == selected.Id));
+
+            if (privateChat != null)
+            {
+                await OnGroupCreated.InvokeAsync(privateChat.Id);
+                await Close();
+                return;
+            }
+
+            var room = new ChatRoom
+            {
+                Name = $"Private chat with {selected.FullName}",
+                IsGroup = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(room, new List<string> { CurrentUserId, selected.Id });
+            await OnGroupCreated.InvokeAsync(newRoomId);
+            await Close();
+        }
     }
 
     private async Task CreateGroupChat()
@@ -125,12 +190,12 @@
             memberIds.Add(CurrentUserId);
 
         var chatRoom = new ChatRoom
-            {
-                Name = GroupName,
-                IsGroup = true,
-                TaskId = AttachTask ? SelectedTaskId : null,
-                CreatedAt = DateTime.UtcNow
-            };
+        {
+            Name = GroupName,
+            IsGroup = true,
+            TaskId = AttachTask ? SelectedTaskId : null,
+            CreatedAt = DateTime.UtcNow
+        };
 
         var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(chatRoom, memberIds);
 

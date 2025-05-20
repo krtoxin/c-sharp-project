@@ -1,0 +1,85 @@
+﻿@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IStudyTaskService TaskService
+@inject ITaskAttemptService AttemptService
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="task-panel">
+    @if (AvailableTasks == null)
+    {
+        <p>Loading tasks...</p>
+    }
+    else
+    {
+        <label class="task-select-label">Select a Task:</label>
+        <select class="form-select" @onchange="OnTaskSelected">
+            <option value="">-- Choose --</option>
+            @foreach (var task in AvailableTasks)
+            {
+                <option value="@task.Id">@task.Question</option>
+            }
+        </select>
+
+        @if (SelectedTask != null)
+        {
+            <div class="task-box">
+                <div class="task-question">@SelectedTask.Question</div>
+
+                @if (SelectedTask.TaskType == StudyBuddy.Core.Enums.TaskType.OpenEnded)
+                {
+                    <input class="form-control mt-2" placeholder="Your answer..." @bind="UserAnswer" />
+                }
+
+                <button class="btn btn-sm btn-outline-success mt-2" @onclick="CheckAnswer">Check Answer</button>
+
+                @if (AnswerChecked)
+                {
+                    <div class="mt-2 @(IsAnswerCorrect ? "text-success" : "text-danger")">
+                        @(IsAnswerCorrect ? "Correct!" : "Incorrect. Try again.")
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<StudyTask> AvailableTasks = new();
+    private StudyTask? SelectedTask;
+    private string UserAnswer = "";
+    private bool AnswerChecked = false;
+    private bool IsAnswerCorrect = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AvailableTasks = (await TaskService.GetAllTasksAsync()).ToList();
+    }
+
+    private async Task OnTaskSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int taskId))
+        {
+            SelectedTask = await TaskService.GetByIdAsync(taskId);
+            AnswerChecked = false;
+            UserAnswer = "";
+        }
+    }
+
+    private async Task CheckAnswer()
+    {
+        if (SelectedTask == null || string.IsNullOrWhiteSpace(UserAnswer)) return;
+
+        IsAnswerCorrect = string.Equals(
+            UserAnswer.Trim(),
+            SelectedTask.CorrectAnswer?.Trim(),
+            StringComparison.OrdinalIgnoreCase);
+
+        AnswerChecked = true;
+
+        await AttemptService.SaveAttemptAsync(new TaskAttempt
+        {
+            TaskId = SelectedTask.Id,
+            IsCorrect = IsAnswerCorrect
+        });
+    }
+}

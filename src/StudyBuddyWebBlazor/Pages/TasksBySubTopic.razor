@@ -100,6 +100,11 @@
             </div>
         }
 
+        @if (!string.IsNullOrWhiteSpace(DeleteStatusMessage))
+        {
+            <div class="alert alert-warning mt-2">@DeleteStatusMessage</div>
+        }
+
         @if (Tasks?.Count > 0)
         {
             <div class="task-list-wrapper">
@@ -137,6 +142,7 @@
     private StudyTask NewTask = new();
     private bool showForm = false;
     private bool isEdit = false;
+    private string? DeleteStatusMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -151,12 +157,12 @@
     private void ShowAddForm()
     {
         NewTask = new StudyTask
-            {
-                Question = string.Empty,
-                TaskType = TaskType.OpenEnded,
-                SubTopicId = SubTopicId,
-                Options = new List<TaskOption>()
-            };
+        {
+            Question = string.Empty,
+            TaskType = TaskType.OpenEnded,
+            SubTopicId = SubTopicId,
+            Options = new List<TaskOption>()
+        };
         showForm = true;
         isEdit = false;
     }
@@ -164,15 +170,15 @@
     private void EditTask(StudyTask task)
     {
         NewTask = new StudyTask
-            {
-                Id = task.Id,
-                Question = task.Question,
-                TaskType = task.TaskType,
-                CorrectAnswer = task.CorrectAnswer,
-                SolutionHint = task.SolutionHint,
-                SubTopicId = task.SubTopicId,
-                Options = task.Options?.ToList() ?? new()
-            };
+        {
+            Id = task.Id,
+            Question = task.Question,
+            TaskType = task.TaskType,
+            CorrectAnswer = task.CorrectAnswer,
+            SolutionHint = task.SolutionHint,
+            SubTopicId = task.SubTopicId,
+            Options = task.Options?.ToList() ?? new()
+        };
         showForm = true;
         isEdit = true;
     }
@@ -193,9 +199,20 @@
 
     private async Task DeleteTask(int id)
     {
-        await TaskService.DeleteAsync(id);
-        await LoadTasks();
+        var result = await TaskService.DeleteAsync(id);
+
+        if (result.IsSuccess)
+        {
+            await LoadTasks();
+            DeleteStatusMessage = null;
+        }
+        else
+        {
+            DeleteStatusMessage = result.Errors.FirstOrDefault() ?? "Failed to delete task.";
+        }
     }
+
+
 
     private void CancelForm() => showForm = false;
 

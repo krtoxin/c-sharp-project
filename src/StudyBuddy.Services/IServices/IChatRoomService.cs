@@ -14,5 +14,8 @@ namespace StudyBuddy.Services.IServices
         Task<int> CreateRoomWithMembersAsync(ChatRoom room, List<string> memberUserIds);
         Task<ChatRoom> GetOrCreateRoomForTaskAsync(int taskId, string creatorId);
         Task<IEnumerable<ChatMessageDto>> GetMessagesForRoomAsync(int roomId, int skip = 0, int take = 50);
+        Task<ChatRoom> GetByIdAsync(int id);
+        Task LeaveOrDeleteChatAsync(int roomId, string userId);
+        Task AddMemberToRoomAsync(int roomId, string userId);
     }
 }

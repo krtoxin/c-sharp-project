@@ -23,5 +23,9 @@ namespace StudyBuddy.Repositories.Repositories
                 .Where(cr => cr.Members.Any(m => m.UserId == userId))
                 .OrderByDescending(cr => cr.CreatedAt)
                 .ToListAsync();
+        public async Task AddMessageAsync(ChatMessage message)
+        {
+            await _context.ChatMessages.AddAsync(message);
+        }
     }
 }
