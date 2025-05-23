@@ -1,0 +1,75 @@
+﻿@page "/profile"
+@using StudyBuddy.Services.IServices
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthProvider
+@using Microsoft.AspNetCore.Components.Forms
+@using StudyBuddy.Core.Entities
+
+<h3 class="profile-title"><i class="bi bi-person-circle me-2"></i>My Profile</h3>
+
+@if (CurrentUser == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="profile-card">
+        <img class="avatar-img"
+             src="@(string.IsNullOrEmpty(CurrentUser.ProfileImage) ? "/img/default-avatar.jpg" : CurrentUser.ProfileImage)"
+             alt="User Avatar" />
+
+        <div class="info-block">
+            <label>Name:</label>
+            <InputText class="form-control mb-2" @bind-Value="CurrentUser.FullName" />
+
+            <div><strong>Email:</strong> @CurrentUser.Email</div>
+            <div><strong>Role:</strong> @CurrentUser.Role?.Name</div>
+
+            <div class="mt-3">
+                <InputFile OnChange="OnAvatarChange" />
+                <button class="btn btn-primary mt-2" @onclick="SaveChanges">Save Changes</button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(StatusMessage))
+            {
+                <div class="alert alert-info mt-2">@StatusMessage</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private User? CurrentUser;
+    private string? StatusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst("nameid")?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            CurrentUser = await UserService.GetByIdAsync(userId);
+        }
+    }
+
+    private async Task OnAvatarChange(InputFileChangeEventArgs e)
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst("nameid")?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var result = await UserService.SaveAvatarAsync(userId, e.File);
+            StatusMessage = result.IsSuccess ? "Avatar updated." : result.Errors.FirstOrDefault();
+            CurrentUser = await UserService.GetByIdAsync(userId);
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        if (CurrentUser != null)
+        {
+            await UserService.UpdateAsync(CurrentUser);
+            StatusMessage = "Profile updated successfully.";
+        }
+    }
+}

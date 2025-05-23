@@ -3,6 +3,7 @@ using StudyBuddy.Core.Entities;
 using StudyBuddy.Repositories.Interfaces;
 using StudyBuddy.Core.DTOs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace StudyBuddy.Services.Services
 {
@@ -22,7 +23,7 @@ namespace StudyBuddy.Services.Services
 
         private static Dictionary<string, string> _resetCodeHashes = new();
 
-        public async Task<string> GenerateResetCodeAsync(User user)
+        public Task<string> GenerateResetCodeAsync(User user)
         {
             var code = new Random().Next(100000, 999999).ToString();
 
@@ -31,7 +32,7 @@ namespace StudyBuddy.Services.Services
 
             _resetCodeHashes[user.Email] = hashedCode;
 
-            return code;
+            return Task.FromResult(code);
         }
 
         public async Task<ApiResult> ResetPasswordAsync(string email, string code, string newPassword)
@@ -66,6 +67,40 @@ namespace StudyBuddy.Services.Services
         {
             return await _userRepository.GetAllAsync();
         }
+
+        public async Task<ApiResult> SaveAvatarAsync(string userId, IBrowserFile file)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                return ApiResult.Failure("User not found");
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.OpenReadStream().CopyToAsync(stream);
+
+            user.ProfileImage = $"/avatars/{fileName}";
+            await _userRepository.UpdateAsync(user);
+
+            return ApiResult.Success();
+        }
+
+        public async Task<User?> GetByIdAsync(string id)
+        {
+            return await _userRepository.GetByIdAsync(id);
+        }
+
+        public async Task UpdateAsync(User user)
+        {
+            await _userRepository.UpdateAsync(user);
+        }
+
 
     }
 }
