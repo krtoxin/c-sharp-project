@@ -29,9 +29,7 @@
 
                 @if (IsInRole("Manager") || IsInRole("Admin"))
                 {
-                    <NavLink href="/tasks" class="nav-link" activeClass="active">
-                        <i class="bi bi-check2-circle"></i> Tasks
-                    </NavLink>
+                    
                     <NavLink href="/subjects" class="nav-link" activeClass="active">
                         <i class="bi bi-journal-bookmark"></i> Subjects
                     </NavLink>
@@ -54,6 +52,9 @@
                 {
                     <NavLink href="/chats" class="nav-link" activeClass="active">
                         <i class="bi bi-chat-dots"></i> Chat
+                    </NavLink>
+                    <NavLink href="/tasks" class="nav-link" activeClass="active">
+                        <i class="bi bi-check2-circle"></i> Tasks
                     </NavLink>
                 }
 

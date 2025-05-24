@@ -158,11 +158,16 @@
         AnswerCorrect = correct;
         AnswerSubmitted = true;
 
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst("nameid")?.Value;
+
         await AttemptService.SaveAttemptAsync(new TaskAttempt
             {
                 TaskId = Task.Id,
-                IsCorrect = correct
+                IsCorrect = correct,
+                UserId = userId!
             });
+
     }
 
     private void ToggleOption(string text, object? checkedValue)
