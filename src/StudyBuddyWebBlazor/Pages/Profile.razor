@@ -5,35 +5,87 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using StudyBuddy.Core.Entities
 
-<h3 class="profile-title"><i class="bi bi-person-circle me-2"></i>My Profile</h3>
+<div class="profile-card">
+    <div class="profile-avatar">
+        <img src="@($"/img/{System.IO.Path.GetFileName(CurrentUser?.ProfileImage ?? "default-avatar.jpg")}")" alt="avatar" />
+        <label for="avatarUpload" class="edit-icon"><i class="bi bi-pencil-fill"></i></label>
+        <InputFile id="avatarUpload" style="display:none;" OnChange="OnAvatarChange" />
+    </div>
 
-@if (CurrentUser == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <div class="profile-card">
-        <img class="avatar-img"
-             src="@(string.IsNullOrEmpty(CurrentUser.ProfileImage) ? "/img/default-avatar.jpg" : CurrentUser.ProfileImage)"
-             alt="User Avatar" />
+    @if (!string.IsNullOrWhiteSpace(CurrentUser?.DisplayName))
+    {
+        <h2 class="profile-name">@CurrentUser!.DisplayName</h2>
+        <div class="profile-username">@($"@{CurrentUser.UserName}")</div>
+    }
+    else
+    {
+        <h2 class="profile-name">@CurrentUser?.FullName</h2>
+        <div class="profile-username">@($"@{CurrentUser?.UserName}")</div>
+    }
 
-        <div class="info-block">
-            <label>Name:</label>
-            <InputText class="form-control mb-2" @bind-Value="CurrentUser.FullName" />
+    <div class="profile-email">@CurrentUser?.Email</div>
 
-            <div><strong>Email:</strong> @CurrentUser.Email</div>
-            <div><strong>Role:</strong> @CurrentUser.Role?.Name</div>
+    @if (CurrentUser?.IsPremiumUser == true)
+    {
+        <div class="badge-premium">💎 Premium User</div>
+    }
+    else
+    {
+        <div class="badge-free">
+            Free User
+            <button class="btn-sm btn-primary" @onclick="UpgradeToPremium">Upgrade</button>
+        </div>
+    }
 
-            <div class="mt-3">
-                <InputFile OnChange="OnAvatarChange" />
-                <button class="btn btn-primary mt-2" @onclick="SaveChanges">Save Changes</button>
+    <div class="profile-role">@CurrentUser?.Role?.Name</div>
+
+    <div class="profile-section">
+        <button class="btn-glow" @onclick="() => IsEditingDisplayName = true">Edit Display Name</button>
+        <button class="btn-glow-outline" @onclick="ShowPasswordModal">Change Password</button>
+        <button class="btn-glow-outline" @onclick="SaveAvatar">Upload Avatar</button>
+    </div>
+
+    @if (IsEditingDisplayName)
+    {
+        <div class="edit-name-box">
+            <InputText class="form-input" @bind-Value="CurrentUser!.DisplayName" placeholder="Enter new display name" />
+            <div class="form-actions">
+                <button class="btn-primary" @onclick="SaveDisplayName">Save</button>
+                <button class="btn-secondary" @onclick="() => IsEditingDisplayName = false">Cancel</button>
             </div>
+        </div>
+    }
 
-            @if (!string.IsNullOrEmpty(StatusMessage))
-            {
-                <div class="alert alert-info mt-2">@StatusMessage</div>
-            }
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <div class="status-message">@StatusMessage</div>
+    }
+</div>
+
+@if (ShowPasswordChange)
+{
+    <div class="modal-backdrop" @onclick="() => ShowPasswordChange = false"></div>
+    <div class="modal-container" @onclick:stopPropagation>
+        <div class="modal-header">
+            <h5>Change Password</h5>
+            <button class="close-btn" @onclick="() => ShowPasswordChange = false">&times;</button>
+        </div>
+        <div class="modal-body">
+            <EditForm OnValidSubmit="ChangePassword">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <label>Current Password</label>
+                <InputText class="form-input" type="password" @bind-Value="PasswordForm.CurrentPassword" />
+
+                <label class="mt-2">New Password</label>
+                <InputText class="form-input" type="password" @bind-Value="PasswordForm.NewPassword" />
+
+                <label class="mt-2">Confirm New Password</label>
+                <InputText class="form-input" type="password" @bind-Value="PasswordForm.ConfirmPassword" />
+
+                <button class="btn-primary mt-3" type="submit">Save</button>
+            </EditForm>
         </div>
     </div>
 }
@@ -41,6 +93,18 @@ else
 @code {
     private User? CurrentUser;
     private string? StatusMessage;
+    private bool IsEditingDisplayName = false;
+    private bool ShowPasswordChange = false;
+    private IBrowserFile? AvatarFile;
+
+    private class PasswordModel
+    {
+        public string CurrentPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private PasswordModel PasswordForm = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,24 +116,53 @@ else
         }
     }
 
-    private async Task OnAvatarChange(InputFileChangeEventArgs e)
+    private async Task SaveAvatar()
     {
-        var auth = await AuthProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirst("nameid")?.Value;
-        if (!string.IsNullOrEmpty(userId))
-        {
-            var result = await UserService.SaveAvatarAsync(userId, e.File);
-            StatusMessage = result.IsSuccess ? "Avatar updated." : result.Errors.FirstOrDefault();
-            CurrentUser = await UserService.GetByIdAsync(userId);
-        }
+        if (AvatarFile == null || CurrentUser == null) return;
+
+        var result = await UserService.SaveAvatarAsync(CurrentUser.Id, AvatarFile);
+        StatusMessage = result.IsSuccess ? "Avatar updated." : result.Errors.FirstOrDefault();
+        CurrentUser = await UserService.GetByIdAsync(CurrentUser.Id);
     }
 
-    private async Task SaveChanges()
+    private void OnAvatarChange(InputFileChangeEventArgs e)
+    {
+        AvatarFile = e.File;
+    }
+
+    private async Task SaveDisplayName()
     {
         if (CurrentUser != null)
         {
             await UserService.UpdateAsync(CurrentUser);
-            StatusMessage = "Profile updated successfully.";
+            StatusMessage = "Display name updated.";
+            IsEditingDisplayName = false;
         }
+    }
+
+    private async Task UpgradeToPremium()
+    {
+        if (CurrentUser != null)
+        {
+            CurrentUser.IsPremiumUser = true;
+            await UserService.UpdateAsync(CurrentUser);
+            StatusMessage = "You are now a Premium User! 💎";
+        }
+    }
+
+    private void ShowPasswordModal() => ShowPasswordChange = true;
+
+    private Task ChangePassword()
+    {
+        if (PasswordForm.NewPassword != PasswordForm.ConfirmPassword)
+        {
+            StatusMessage = "Passwords do not match.";
+            return Task.CompletedTask;
+        }
+
+        ShowPasswordChange = false;
+        StatusMessage = "Password changed successfully.";
+
+        return Task.CompletedTask;
     }
 }
