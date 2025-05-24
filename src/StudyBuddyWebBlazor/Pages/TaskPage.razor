@@ -5,6 +5,7 @@
 @inject IStudyTaskService TaskService
 @inject ITaskAttemptService AttemptService
 @inject AuthenticationStateProvider AuthProvider
+@implements IDisposable
 
 <div class="task-display-wrapper">
     @if (Task == null)
@@ -65,7 +66,7 @@
         }
         else
         {
-            <EditForm OnValidSubmit="SubmitAnswer">
+            <EditForm Model="AnswerFormModel" OnValidSubmit="SubmitAnswer">
                 @if (Task.TaskType == TaskType.OpenEnded)
                 {
                     <div class="task-open-ended-display">
@@ -120,10 +121,13 @@
 
 @code {
     [Parameter] public int TaskId { get; set; }
+
     private StudyTask? Task;
     private List<TaskAttempt> TaskAttempts = new();
     private bool IsAdminOrManager;
+    private bool _disposed;
 
+    private object AnswerFormModel = new(); 
     private string UserInputText = string.Empty;
     private List<string> SelectedOptions = new();
     private string? SingleSelected;
@@ -137,6 +141,8 @@
         IsAdminOrManager = user.IsInRole("Admin") || user.IsInRole("Manager");
 
         Task = await TaskService.GetByIdAsync(TaskId);
+        if (_disposed || Task == null) return;
+
         if (IsAdminOrManager)
         {
             TaskAttempts = await AttemptService.GetAttemptsByTaskIdAsync(TaskId);
@@ -145,7 +151,26 @@
 
     private async Task SubmitAnswer()
     {
-        if (Task == null) return;
+        if (Task == null || _disposed) return;
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            AnswerSubmitted = true;
+            AnswerCorrect = false;
+            return;
+        }
+
+        var userId = user.FindFirst("nameid")?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            AnswerSubmitted = true;
+            AnswerCorrect = false;
+            return;
+        }
 
         bool correct = Task.TaskType switch
         {
@@ -158,20 +183,22 @@
         AnswerCorrect = correct;
         AnswerSubmitted = true;
 
-        var auth = await AuthProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirst("nameid")?.Value;
-
-        await AttemptService.SaveAttemptAsync(new TaskAttempt
-            {
-                TaskId = Task.Id,
-                IsCorrect = correct,
-                UserId = userId!
-            });
-
+        if (!_disposed)
+        {
+            await AttemptService.SaveAttemptAsync(new TaskAttempt
+                {
+                    TaskId = Task.Id,
+                    IsCorrect = correct,
+                    UserId = userId
+                });
+        }
     }
+
 
     private void ToggleOption(string text, object? checkedValue)
     {
+        if (_disposed) return;
+
         bool isChecked = checkedValue is bool b && b;
         if (isChecked)
         {
@@ -183,5 +210,14 @@
         }
     }
 
-    private void SelectSingleOption(string text) => SingleSelected = text;
+    private void SelectSingleOption(string text)
+    {
+        if (!_disposed)
+            SingleSelected = text;
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
 }

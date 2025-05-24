@@ -1,8 +1,10 @@
 ﻿@page "/tasks"
 @inject ISubjectService SubjectService
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
 @using StudyBuddy.Core.Entities
 @using StudyBuddy.Services.IServices
+@implements IDisposable
 
 <div class="subjects-wrapper">
     <h2 class="subjects-header-title">📘 Choose a Subject</h2>
@@ -33,14 +35,27 @@
 
 @code {
     private List<Subject> Subjects = new();
+    private bool _disposed = false;
 
     protected override async Task OnInitializedAsync()
     {
-        Subjects = (await SubjectService.GetAllAsync()).ToList();
+        var subjects = await SubjectService.GetAllAsync();
+        if (_disposed) return;
+
+        Subjects = subjects.ToList();
+
+        if (!_disposed)
+            StateHasChanged(); 
     }
 
     private void NavigateToSubject(int id)
     {
-        Navigation.NavigateTo($"/tasks/subject/{id}");
+        if (!_disposed)
+            Navigation.NavigateTo($"/tasks/subject/{id}");
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
     }
 }

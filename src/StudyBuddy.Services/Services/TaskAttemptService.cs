@@ -25,12 +25,9 @@ namespace StudyBuddy.Services.Services
 
         public async Task SaveAttemptAsync(TaskAttempt attempt)
         {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(attempt.UserId))
+                throw new InvalidOperationException("User ID must be provided when saving attempt.");
 
-            if (string.IsNullOrEmpty(userId))
-                throw new InvalidOperationException("User not authenticated");
-
-            attempt.UserId = userId;
             attempt.AttemptTime = DateTime.UtcNow;
 
             _context.TaskAttempts.Add(attempt);
