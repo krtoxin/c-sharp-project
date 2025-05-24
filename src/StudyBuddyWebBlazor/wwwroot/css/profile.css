@@ -1,4 +1,7 @@
 ﻿.profile-card {
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
     background: rgba(255, 255, 255, 0.04);
     padding: 2rem;
     border-radius: 16px;
@@ -9,6 +12,7 @@
     backdrop-filter: blur(10px);
     animation: fadeIn 0.5s ease;
 }
+
 
 .profile-avatar {
     position: relative;
@@ -49,6 +53,7 @@
     margin-top: 1rem;
     font-size: 1.5rem;
     color: #fff;
+    text-align: center;
 }
 
 .profile-username {
@@ -134,13 +139,14 @@
     }
 
 .form-input {
-    width: 100%;
+    width: auto;
     padding: 0.6rem 1rem;
     border-radius: 8px;
     border: none;
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
     font-size: 1rem;
+    margin: 0 auto;
 }
 
     .form-input:focus {

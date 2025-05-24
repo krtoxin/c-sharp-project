@@ -7,7 +7,7 @@
 
 <div class="profile-card">
     <div class="profile-avatar">
-        <img src="@($"/img/{System.IO.Path.GetFileName(CurrentUser?.ProfileImage ?? "default-avatar.jpg")}")" alt="avatar" />
+        <img src="@GetAvatarSource()" alt="avatar" />
         <label for="avatarUpload" class="edit-icon"><i class="bi bi-pencil-fill"></i></label>
         <InputFile id="avatarUpload" style="display:none;" OnChange="OnAvatarChange" />
     </div>
@@ -42,7 +42,6 @@
     <div class="profile-section">
         <button class="btn-glow" @onclick="() => IsEditingDisplayName = true">Edit Display Name</button>
         <button class="btn-glow-outline" @onclick="ShowPasswordModal">Change Password</button>
-        <button class="btn-glow-outline" @onclick="SaveAvatar">Upload Avatar</button>
     </div>
 
     @if (IsEditingDisplayName)
@@ -116,18 +115,19 @@
         }
     }
 
-    private async Task SaveAvatar()
-    {
-        if (AvatarFile == null || CurrentUser == null) return;
-
-        var result = await UserService.SaveAvatarAsync(CurrentUser.Id, AvatarFile);
-        StatusMessage = result.IsSuccess ? "Avatar updated." : result.Errors.FirstOrDefault();
-        CurrentUser = await UserService.GetByIdAsync(CurrentUser.Id);
-    }
-
-    private void OnAvatarChange(InputFileChangeEventArgs e)
+    private async void OnAvatarChange(InputFileChangeEventArgs e)
     {
         AvatarFile = e.File;
+    }
+
+    private string GetAvatarSource()
+    {
+        if (!string.IsNullOrEmpty(CurrentUser?.ProfileImage))
+        {
+            return CurrentUser.ProfileImage.StartsWith("/") ? CurrentUser.ProfileImage : $"/avatars/{CurrentUser.ProfileImage}";
+        }
+
+        return "/img/default-avatar.jpg";
     }
 
     private async Task SaveDisplayName()
@@ -135,7 +135,19 @@
         if (CurrentUser != null)
         {
             await UserService.UpdateAsync(CurrentUser);
-            StatusMessage = "Display name updated.";
+
+            if (AvatarFile != null)
+            {
+                var avatarResult = await UserService.SaveAvatarAsync(CurrentUser.Id, AvatarFile);
+                StatusMessage = avatarResult.IsSuccess ? "Avatar and display name updated." : avatarResult.Errors.FirstOrDefault();
+            }
+            else
+            {
+                StatusMessage = "Display name updated.";
+            }
+
+            CurrentUser = await UserService.GetByIdAsync(CurrentUser.Id);
+            AvatarFile = null;
             IsEditingDisplayName = false;
         }
     }
@@ -162,7 +174,6 @@
 
         ShowPasswordChange = false;
         StatusMessage = "Password changed successfully.";
-
         return Task.CompletedTask;
     }
 }
