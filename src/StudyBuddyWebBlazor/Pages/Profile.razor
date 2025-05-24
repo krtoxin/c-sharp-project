@@ -4,6 +4,9 @@
 @inject AuthenticationStateProvider AuthProvider
 @using Microsoft.AspNetCore.Components.Forms
 @using StudyBuddy.Core.Entities
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
 
 <div class="profile-card">
     <div class="profile-avatar">
@@ -27,7 +30,12 @@
 
     @if (CurrentUser?.IsPremiumUser == true)
     {
-        <div class="badge-premium">💎 Premium User</div>
+        <div class="badge-premium">
+            💎 Premium User
+            <div class="premium-date">
+                Діє до: @CurrentUser.PremiumUntil?.ToLocalTime().ToString("dd.MM.yyyy")
+            </div>
+        </div>
     }
     else
     {
@@ -70,7 +78,7 @@
             <button class="close-btn" @onclick="() => ShowPasswordChange = false">&times;</button>
         </div>
         <div class="modal-body">
-            <EditForm OnValidSubmit="ChangePassword">
+            <EditForm Model="PasswordForm" OnValidSubmit="ChangePassword">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
@@ -154,13 +162,17 @@
 
     private async Task UpgradeToPremium()
     {
+        await JS.InvokeVoidAsync("openInNewTab", "https://send.monobank.ua/jar/4yZ9Td6Ve5");
+
         if (CurrentUser != null)
         {
             CurrentUser.IsPremiumUser = true;
+            CurrentUser.PremiumUntil = DateTime.UtcNow.AddMonths(1);
             await UserService.UpdateAsync(CurrentUser);
-            StatusMessage = "You are now a Premium User! 💎";
+            StatusMessage = "🎉 Ви тепер Premium користувач!";
         }
     }
+
 
     private void ShowPasswordModal() => ShowPasswordChange = true;
 

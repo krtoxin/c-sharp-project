@@ -46,4 +46,8 @@
     <Folder Include="Components\Lists\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\js\site.js" />
+  </ItemGroup>
+
 </Project>

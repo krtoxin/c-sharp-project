@@ -9,7 +9,8 @@
         public string FullName { get; set; } = null!;
         public string? DisplayName { get; set; } 
         public string? ProfileImage { get; set; }
-        public bool IsPremiumUser { get; set; } = false; 
+        public bool IsPremiumUser { get; set; } = false;
+        public DateTime? PremiumUntil { get; set; } 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsOnline { get; set; }
         public DateTime LastActive { get; set; }
