@@ -227,7 +227,7 @@ body {
 .btn-secondary {
     background-color: rgba(255, 255, 255, 0.1);
     color: #fff;
-}
+}   
 
     .btn-secondary:hover {
         background-color: rgba(255, 255, 255, 0.2);
@@ -284,4 +284,75 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+body.light-theme {
+    background: #f5f5f5;
+    color: #222;
+}
+
+.light-theme .layout-wrapper {
+    background: #f5f5f5;
+}
+
+.light-theme .sidebar {
+    background: #ffffff;
+    color: #333;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .nav-link {
+    color: #444;
+}
+
+    .light-theme .nav-link.active {
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        color: #fff;
+    }
+
+.light-theme .topbar {
+    background-color: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    backdrop-filter: none;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
+.light-theme .icon-btn {
+    color: #444;
+}
+
+    .light-theme .icon-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+.light-theme .profile-menu img {
+    border: 2px solid #007bff;
+}
+
+
+.light-theme .main-content {
+    background: #fff;
+    color: #111;
+}
+
+.light-theme .subjects-form,
+.light-theme .settings-card {
+    background: #ffffff;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    color: #222;
+}
+
+.light-theme .setting-label {
+    color: #333;
+}
+
+.light-theme .custom-select {
+    background: #f0f0f0;
+    color: #000;
+}
+
+.light-theme .btn-glow {
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+    color: white;
 }

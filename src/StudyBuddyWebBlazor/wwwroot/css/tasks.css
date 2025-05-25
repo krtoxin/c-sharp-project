@@ -550,3 +550,110 @@ input[type="file"] {
     align-items: center;
     color: #fff;
 }
+
+/* === DISCORD-STYLE LIGHT THEME TASKS === */
+body.light-theme {
+    background: #f2f3f5;
+    color: #23272a;
+}
+
+/* Card-style task containers */
+.light-theme .task-card,
+.light-theme .subtopic-card,
+.light-theme .subject-card {
+    background-color: #ffffff;
+    border: 1px solid #d1d1d1;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: background 0.2s ease, transform 0.2s ease;
+    color: #23272a;
+}
+
+    .light-theme .task-card:hover,
+    .light-theme .subtopic-card:hover,
+    .light-theme .subject-card:hover {
+        background-color: #f6f6f7;
+        transform: translateY(-3px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    }
+
+/* Section heading */
+.light-theme .section-title {
+    color: #5865f2;
+    border-left: 6px solid #5865f2;
+}
+
+/* Titles inside cards */
+.light-theme .task-title,
+.light-theme .subtopic-title,
+.light-theme .subject-card-label {
+    color: #40444b;
+    font-weight: 600;
+}
+
+/* Meta info like categories or tags */
+.light-theme .task-meta,
+.light-theme .subtopic-meta {
+    color: #747f8d;
+}
+
+/* Input fields */
+.light-theme input.form-control,
+.light-theme textarea.form-control,
+.light-theme select.form-select {
+    background-color: #ffffff;
+    color: #2c2f33;
+    border: 1px solid #d1d1d1;
+    border-radius: 6px;
+}
+
+    .light-theme input.form-control:focus,
+    .light-theme textarea.form-control:focus,
+    .light-theme select.form-select:focus {
+        border-color: #5865f2;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.15);
+    }
+
+/* Buttons */
+.light-theme .btn {
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.light-theme .btn-primary {
+    background-color: #5865f2;
+    border: none;
+    color: #fff;
+}
+
+    .light-theme .btn-primary:hover {
+        background-color: #4752c4;
+    }
+
+/* Hints, helper blocks */
+.light-theme .task-hint-box,
+.light-theme .feedback-correct,
+.light-theme .feedback-incorrect {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.light-theme .task-hint-box {
+    background-color: #f6f6f7;
+    color: #4f545c;
+    border-left: 4px solid #ffcc00;
+}
+
+.light-theme .feedback-correct {
+    background-color: #dcfce7;
+    border-left: 4px solid #28a745;
+    color: #2c662d;
+}
+
+.light-theme .feedback-incorrect {
+    background-color: #ffe4e6;
+    border-left: 4px solid #dc3545;
+    color: #721c24;
+}

@@ -21,7 +21,7 @@
     <link href="app.css" rel="stylesheet" />
     <link href="~/css/chat.css" rel="stylesheet" />
     <link href="/css/profile.css" rel="stylesheet" />
-    <script src="js/site.js"></script>
+    <link href="/css/settings.css" rel="stylesheet" />
 
 
 
@@ -31,11 +31,12 @@
     <script src="js/emoji.js"></script>
 </head>
 
-<body>
+<body class="default-theme">
     <app>
         <component type="typeof(App)" render-mode="Server" />
     </app>
     <script src="_framework/blazor.server.js"></script>
+    <script src="js/site.js"></script>
     <script>
         window.blazorHelpers = {
           scrollToBottom: function (element) {

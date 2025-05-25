@@ -1,0 +1,87 @@
+﻿@page "/settings"
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="settings-wrapper">
+    <h3 class="settings-title">
+        <i class="bi bi-gear-fill"></i> Settings
+    </h3>
+
+    <div class="settings-card">
+        <div class="setting-group">
+            <label class="setting-label">
+                <i class="bi bi-translate"></i> Language
+            </label>
+            <select class="form-select custom-select" @bind="SelectedLanguage">
+                @foreach (var lang in AvailableLanguages)
+                {
+                    <option value="@lang">@lang</option>
+                }
+            </select>
+        </div>
+
+        <div class="setting-group mt-4">
+            <label class="setting-label">
+                <i class="bi bi-palette2"></i> Theme
+            </label>
+            <select class="form-select custom-select" @bind="SelectedTheme">
+                <option value="default">Default</option>
+                <option value="light">Light</option>
+            </select>
+        </div>
+
+        <button class="btn btn-glow mt-4" @onclick="SaveSettings">
+            <i class="bi bi-check-circle-fill"></i> Save Settings
+        </button>
+
+        @if (ThemeJustSaved)
+        {
+            <div class="alert alert-success mt-3">
+                Theme applied successfully 🎉
+            </div>
+        }
+
+        @if (ThemeError)
+        {
+            <div class="alert alert-danger mt-3">
+                Failed to apply theme ❌
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string SelectedLanguage = "English";
+    private string SelectedTheme = "default";
+    private List<string> AvailableLanguages = new() { "English", "Українська" };
+
+    private bool ThemeJustSaved = false;
+    private bool ThemeError = false;
+
+    private async Task SaveSettings()
+    {
+        Console.WriteLine($"Saved: Lang = {SelectedLanguage}, Theme = {SelectedTheme}");
+
+        try
+        {
+            await JS.InvokeVoidAsync("applyTheme", SelectedTheme);
+            ThemeJustSaved = true;
+            ThemeError = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"JS error: {ex.Message}");
+            ThemeJustSaved = false;
+            ThemeError = true;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var savedTheme = await JS.InvokeAsync<string>("localStorage.getItem", "theme");
+        if (!string.IsNullOrEmpty(savedTheme))
+        {
+            SelectedTheme = savedTheme;
+        }
+    }
+}
