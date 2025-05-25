@@ -1,0 +1,89 @@
+﻿@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IUserService UserService
+@inject IChatRoomService ChatRoomService
+@inject AuthenticationStateProvider AuthProvider
+
+@if (IsVisible)
+{
+    <div class="modal-backdrop" @onclick="Close"></div>
+
+    <div class="modal-container" @onclick:stopPropagation>
+        <div class="modal-header">
+            <h5>Group Chat Members</h5>
+            <button class="close-btn" @onclick="Close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <h6>Current Members:</h6>
+            <ul>
+                @foreach (var member in CurrentMembers)
+                {
+                    <li>@member.FullName (@member.Email)</li>
+                }
+            </ul>
+
+            <hr />
+
+            <label>Search & Add Users</label>
+            <input class="form-control" placeholder="Search users..." @bind="UserSearchTerm" @bind:event="oninput" />
+
+            <div class="user-search-results mt-2">
+                @foreach (var user in FilteredUsers)
+                {
+                    <div class="user-item" @onclick="() => AddUserToGroup(user)">
+                        <span>@user.FullName (@user.Email)</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public int ChatRoomId { get; set; }
+
+    private List<User> CurrentMembers = new();
+    private List<User> AllUsers = new();
+    private string UserSearchTerm = "";
+
+    private IEnumerable<User> FilteredUsers =>
+        string.IsNullOrWhiteSpace(UserSearchTerm)
+        ? AllUsers.Except(CurrentMembers)
+        : AllUsers
+            .Where(u => (u.FullName.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase) || u.Email.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase))
+                     && !CurrentMembers.Any(m => m.Id == u.Id));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible)
+        {
+            var chatRoom = await ChatRoomService.GetByIdAsync(ChatRoomId);
+            CurrentMembers = chatRoom.Members.Select(m => m.User).ToList();
+            AllUsers = (await UserService.GetAllUsersAsync()).ToList();
+        }
+    }
+
+    private async Task AddUserToGroup(User user)
+    {
+        var chatRoom = await ChatRoomService.GetByIdAsync(ChatRoomId);
+        var alreadyMember = chatRoom.Members.Any(m => m.UserId == user.Id);
+
+        if (!alreadyMember)
+        {
+            await ChatRoomService.AddMemberToRoomAsync(ChatRoomId, user.Id);
+            await OnParametersSetAsync(); 
+        }
+    }
+
+    private async Task Close()
+    {
+        await IsVisibleChanged.InvokeAsync(false);
+    }
+}

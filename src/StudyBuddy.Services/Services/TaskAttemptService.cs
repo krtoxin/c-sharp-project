@@ -25,12 +25,9 @@ namespace StudyBuddy.Services.Services
 
         public async Task SaveAttemptAsync(TaskAttempt attempt)
         {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(attempt.UserId))
+                throw new InvalidOperationException("User ID must be provided when saving attempt.");
 
-            if (string.IsNullOrEmpty(userId))
-                throw new InvalidOperationException("User not authenticated");
-
-            attempt.UserId = userId;
             attempt.AttemptTime = DateTime.UtcNow;
 
             _context.TaskAttempts.Add(attempt);
@@ -45,5 +42,15 @@ namespace StudyBuddy.Services.Services
                 .OrderByDescending(a => a.AttemptTime)
                 .ToListAsync();
         }
+
+        public async Task<List<TaskAttempt>> GetAttemptsByUserAndTaskIdAsync(string userId, int taskId)
+        {
+            return await _context.TaskAttempts
+                .Include(a => a.User)
+                .Where(a => a.TaskId == taskId && a.UserId == userId)
+                .OrderByDescending(a => a.AttemptTime)
+                .ToListAsync();
+        }
+
     }
 }

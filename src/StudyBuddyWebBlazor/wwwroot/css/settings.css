@@ -1,0 +1,79 @@
+﻿.settings-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1rem;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.settings-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #ff77ff;
+    margin-bottom: 2.5rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.settings-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem 2.5rem;
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 0 20px rgba(255, 119, 255, 0.15);
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.setting-label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #ff77ff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-select {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+    .custom-select:focus {
+        outline: 2px solid #ff77ff;
+        background-color: rgba(255, 255, 255, 0.12);
+    }
+
+.btn-glow {
+    background: linear-gradient(to right, #ff3cac, #784ba0);
+    border: none;
+    padding: 0.6rem 1.6rem;
+    border-radius: 30px;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 0 14px rgba(255, 60, 172, 0.4);
+    transition: 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+}
+
+    .btn-glow:hover {
+        opacity: 0.95;
+        transform: translateY(-1px);
+    }

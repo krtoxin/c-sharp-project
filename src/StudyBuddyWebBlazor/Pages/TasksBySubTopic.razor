@@ -6,7 +6,8 @@
 @inject ISubTopicService SubTopicService
 @inject IFileService FileService
 @inject NavigationManager Navigation
-@attribute [Authorize(Roles = "Admin,Manager")]
+@inject AuthenticationStateProvider AuthProvider
+@attribute [Authorize(Roles = "Admin,Manager,User")]
 
 <EditForm Model="NewTask" OnValidSubmit="SaveTask">
     <DataAnnotationsValidator />
@@ -15,11 +16,14 @@
     <div class="tasks-wrapper">
         <h2 class="tasks-title">📘 @SubTopicTitle</h2>
 
-        <button class="btn btn-primary mb-3" type="button" @onclick="ShowAddForm">
-            <i class="bi bi-plus-circle"></i> Add New Task
-        </button>
+        @if (IsAdminOrManager)
+        {
+            <button class="btn btn-primary mb-3" type="button" @onclick="ShowAddForm">
+                <i class="bi bi-plus-circle"></i> Add New Task
+            </button>
+        }
 
-        @if (showForm)
+        @if (showForm && IsAdminOrManager)
         {
             <div class="card task-form mb-4">
                 <h4>@(isEdit ? "Edit Task" : "New Task")</h4>
@@ -53,7 +57,6 @@
                 {
                     <div class="mb-3 options-block">
                         <label class="form-label">Options</label>
-
                         @foreach (var option in NewTask.Options)
                         {
                             <div class="option-row">
@@ -100,6 +103,11 @@
             </div>
         }
 
+        @if (!string.IsNullOrWhiteSpace(DeleteStatusMessage))
+        {
+            <div class="alert alert-warning mt-2">@DeleteStatusMessage</div>
+        }
+
         @if (Tasks?.Count > 0)
         {
             <div class="task-list-wrapper">
@@ -109,15 +117,25 @@
                         <div class="task-title">
                             <i class="bi bi-journal-text task-icon"></i> @task.Question
                         </div>
-                        <div class="task-meta">
-                            <span>Type: @task.TaskType.ToString().Replace("OneAnswerTest", "1 Answer Test")</span>
-                            <span>Hint: @(string.IsNullOrWhiteSpace(task.SolutionHint) ? "None" : task.SolutionHint)</span>
-                            <span>Answer: @task.CorrectAnswer</span>
-                        </div>
-                        <div class="mt-3 d-flex gap-2">
-                            <button class="btn btn-sm btn-warning" @onclick:stopPropagation="true" @onclick="() => EditTask(task)">✏️ Edit</button>
-                            <button class="btn btn-sm btn-danger" @onclick:stopPropagation="true" @onclick="() => DeleteTask(task.Id)">🗑️ Delete</button>
-                        </div>
+
+                        @if (IsAdminOrManager)
+                        {
+                            <div class="task-meta">
+                                <span>Type: @task.TaskType.ToString().Replace("OneAnswerTest", "1 Answer Test")</span>
+                                <span>Hint: @(string.IsNullOrWhiteSpace(task.SolutionHint) ? "None" : task.SolutionHint)</span>
+                                <span>Answer: @task.CorrectAnswer</span>
+                            </div>
+                            <div class="mt-3 d-flex gap-2">
+                                <button class="btn btn-sm btn-warning" @onclick:stopPropagation="true" @onclick="() => EditTask(task)">✏️ Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick:stopPropagation="true" @onclick="() => DeleteTask(task.Id)">🗑️ Delete</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mt-3">
+                                <NavLink class="btn btn-sm btn-primary" href="@($"/task/{task.Id}")">Try This Task</NavLink>
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -137,12 +155,18 @@
     private StudyTask NewTask = new();
     private bool showForm = false;
     private bool isEdit = false;
+    private string? DeleteStatusMessage;
+    private bool IsAdminOrManager = false;
 
     protected override async Task OnInitializedAsync()
     {
         var sub = await SubTopicService.GetByIdAsync(SubTopicId);
         SubTopicTitle = sub?.Title ?? "[Unknown Subtopic]";
         await LoadTasks();
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        IsAdminOrManager = user.IsInRole("Admin") || user.IsInRole("Manager");
     }
 
     private async Task LoadTasks() =>
@@ -193,8 +217,17 @@
 
     private async Task DeleteTask(int id)
     {
-        await TaskService.DeleteAsync(id);
-        await LoadTasks();
+        var result = await TaskService.DeleteAsync(id);
+
+        if (result.IsSuccess)
+        {
+            await LoadTasks();
+            DeleteStatusMessage = null;
+        }
+        else
+        {
+            DeleteStatusMessage = result.Errors.FirstOrDefault() ?? "Failed to delete task.";
+        }
     }
 
     private void CancelForm() => showForm = false;

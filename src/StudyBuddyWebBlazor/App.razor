@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
+@using StudyBuddyWebBlazor.Components.Shared
 @using StudyBuddyWebBlazor.Pages
 
 <CascadingAuthenticationState>
@@ -32,6 +33,8 @@
         return pageType == typeof(Login)
             || pageType == typeof(Register)
             || pageType == typeof(ForgotPassword)
-            || pageType == typeof(ResetPassword);
+            || pageType == typeof(ResetPassword)
+            || pageType == typeof(RedirectAfterLogin); 
     }
+
 }

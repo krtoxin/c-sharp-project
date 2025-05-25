@@ -24,9 +24,11 @@ namespace StudyBuddy.Services.Security
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("id", user.Id),
+                new Claim("nameid", user.Id),
                 new Claim("fullName", user.FullName),
                 new Claim(ClaimTypes.Name, user.UserName)
             };
+
 
             foreach (var role in roles)
             {

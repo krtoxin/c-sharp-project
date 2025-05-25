@@ -100,3 +100,55 @@ select.form-input option {
     background-color: #1a1a2e;
     color: #fff;
 }
+
+/* === LIGHT THEME OVERRIDES FOR DASHBOARD === */
+
+
+body.light-theme .dashboard-header h1 {
+    color: #5865f2;
+}
+
+body.light-theme .dashboard-header p {
+    color: #555;
+}
+
+body.light-theme .dashboard-card {
+    border: none !important;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+    body.light-theme .dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    }
+
+
+    body.light-theme .dashboard-card i {
+        color: #5865f2;
+    }
+
+    body.light-theme .dashboard-card h3 {
+        color: #111;
+    }
+
+    body.light-theme .dashboard-card p {
+        color: #555;
+    }
+
+body.light-theme .form-input {
+    background-color: #fff;
+    color: #111;
+    border: 1px solid #ccc;
+}
+
+    body.light-theme .form-input:focus {
+        border-color: #5865f2;
+        box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.15);
+    }
+
+body.light-theme select.form-input option {
+    background-color: #fff;
+    color: #000;
+}

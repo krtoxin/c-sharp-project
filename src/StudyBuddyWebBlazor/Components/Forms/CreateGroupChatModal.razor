@@ -1,0 +1,210 @@
+﻿@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@inject IUserService UserService
+@inject IStudyTaskService StudyTaskService
+@inject IChatRoomService ChatRoomService
+@inject AuthenticationStateProvider AuthProvider
+
+@if (IsVisible)
+{
+    <div class="modal-backdrop" @onclick="Close"></div>
+
+    <div class="modal-container" @onclick:stopPropagation>
+        <div class="modal-header">
+            <h5>@(IsGroupMode ? "Create Group Chat" : "Create Personal Chat")</h5>
+            <button class="close-btn" @onclick="Close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="mb-3 d-flex gap-3">
+                <div class="form-check">
+                    <input type="radio"
+                           class="form-check-input"
+                           name="chatMode"
+                           value="true"
+                           checked="@IsGroupMode"
+                           @onchange="() => IsGroupMode = true" />
+                    <label class="form-check-label">Group</label>
+                </div>
+
+                <div class="form-check">
+                    <input type="radio"
+                           class="form-check-input"
+                           name="chatMode"
+                           value="false"
+                           checked="@(!IsGroupMode)"
+                           @onchange="() => IsGroupMode = false" />
+                    <label class="form-check-label">Personal</label>
+                </div>
+            </div>
+
+            @if (IsGroupMode)
+            {
+                <label>Group Name</label>
+                <input class="form-control" @bind="GroupName" placeholder="Enter group name" />
+            }
+
+            <label class="mt-3">@((IsGroupMode ? "Add Users" : "Select User"))</label>
+            <input class="form-control" placeholder="Search users..." @bind="UserSearchTerm" @bind:event="oninput" />
+
+            <div class="user-search-results">
+                @if (FilteredUsers.Any())
+                {
+                    @foreach (var user in FilteredUsers)
+                    {
+                        <div class="user-item" @onclick="() => ToggleUserSelection(user)">
+                            <input type="checkbox" checked="@SelectedUsers.Contains(user)" disabled="@(!IsGroupMode && SelectedUsers.Any() && !SelectedUsers.Contains(user))" />
+                            <span>@user.FullName (@user.Email)</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div>No users found</div>
+                }
+            </div>
+
+            @if (IsGroupMode)
+            {
+                <div class="form-check mt-3">
+                    <input type="checkbox" class="form-check-input" id="attachTask" @bind="AttachTask" />
+                    <label class="form-check-label" for="attachTask">Attach to Task</label>
+                </div>
+
+                @if (AttachTask)
+                {
+                    <label class="mt-2">Select Task</label>
+                    <select class="form-select" @bind="SelectedTaskId">
+                        <option value="">-- Select a task --</option>
+                        @foreach (var task in Tasks)
+                        {
+                            <option value="@task.Id">@task.Question</option>
+                        }
+                    </select>
+                }
+            }
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+            <button class="btn btn-primary" @onclick="CreateChat" disabled="@IsCreateDisabled">Next</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback<int> OnGroupCreated { get; set; }
+
+    private string GroupName { get; set; } = "";
+    private List<User> AllUsers = new();
+    private string UserSearchTerm { get; set; } = "";
+    private HashSet<User> SelectedUsers { get; set; } = new();
+    private bool AttachTask { get; set; } = false;
+    private List<StudyTask> Tasks = new();
+    private int? SelectedTaskId { get; set; }
+    private string CurrentUserId = "";
+    private bool IsGroupMode { get; set; } = true;
+
+    private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(UserSearchTerm)
+        ? AllUsers
+        : AllUsers.Where(u => u.FullName.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase)
+                           || u.Email.Contains(UserSearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private bool IsCreateDisabled =>
+        (!IsGroupMode && SelectedUsers.Count != 1) ||
+        (IsGroupMode && (string.IsNullOrWhiteSpace(GroupName) || SelectedUsers.Count < 2 || (AttachTask && SelectedTaskId == null)));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible)
+        {
+            AllUsers = (await UserService.GetAllUsersAsync()).ToList();
+            Tasks = (await StudyTaskService.GetAllTasksAsync()).ToList();
+            SelectedUsers.Clear();
+            GroupName = "";
+            UserSearchTerm = "";
+            AttachTask = false;
+            SelectedTaskId = null;
+
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            CurrentUserId = authState.User?.FindFirst("nameid")?.Value ?? authState.User?.FindFirst("id")?.Value ?? "";
+        }
+    }
+
+    private void ToggleUserSelection(User user)
+    {
+        if (user.Id == CurrentUserId)
+            return;
+
+        if (SelectedUsers.Contains(user))
+            SelectedUsers.Remove(user);
+        else
+        {
+            if (!IsGroupMode)
+                SelectedUsers.Clear();
+            SelectedUsers.Add(user);
+        }
+    }
+
+    private async Task CreateChat()
+    {
+        if (IsGroupMode)
+        {
+            await CreateGroupChat();
+        }
+        else
+        {
+            var selected = SelectedUsers.FirstOrDefault();
+            if (selected == null) return;
+
+            var existingRooms = await ChatRoomService.GetRoomsForUserAsync(CurrentUserId);
+            var privateChat = existingRooms.FirstOrDefault(r => !r.IsGroup && r.Members.Any(m => m.UserId == selected.Id));
+
+            if (privateChat != null)
+            {
+                await OnGroupCreated.InvokeAsync(privateChat.Id);
+                await Close();
+                return;
+            }
+
+            var room = new ChatRoom
+            {
+                Name = $"Private chat with {selected.FullName}",
+                IsGroup = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(room, new List<string> { CurrentUserId, selected.Id });
+            await OnGroupCreated.InvokeAsync(newRoomId);
+            await Close();
+        }
+    }
+
+    private async Task CreateGroupChat()
+    {
+        var memberIds = SelectedUsers.Select(u => u.Id).ToList();
+
+        if (!memberIds.Contains(CurrentUserId))
+            memberIds.Add(CurrentUserId);
+
+        var chatRoom = new ChatRoom
+        {
+            Name = GroupName,
+            IsGroup = true,
+            TaskId = AttachTask ? SelectedTaskId : null,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var newRoomId = await ChatRoomService.CreateRoomWithMembersAsync(chatRoom, memberIds);
+
+        await OnGroupCreated.InvokeAsync(newRoomId);
+        await Close();
+    }
+
+    private async Task Close()
+    {
+        await IsVisibleChanged.InvokeAsync(false);
+    }
+}

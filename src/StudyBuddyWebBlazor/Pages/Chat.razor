@@ -1,83 +1,232 @@
 ﻿@page "/chat/{RoomId:int}"
 @using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.SignalR.Client
+@using StudyBuddy.Core.DTOs
+@using StudyBuddy.Repositories.Interfaces
+@using StudyBuddy.Services.IServices
+@using StudyBuddyWebBlazor.Components.Forms
+@inject IChatRoomService ChatRoomService
+@inject IUserRepository UserRepository
 @inject NavigationManager Navigation
 @inject ProtectedLocalStorage _localStorage
 @inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
+@implements IDisposable
 
-<h3>Чат кімната @RoomId</h3>
+<div class="chat-wrapper">
+    <div class="chat-main">
+        <div class="chat-header">
+            <div class="chat-header-content">
+                <div class="user-info" @onclick="ToggleMembersModal" style="cursor: pointer">
+                    @if (IsGroupChat)
+                    {
+                        <div class="avatar d-flex align-items-center justify-content-center">
+                            <i class="bi bi-people-fill" style="font-size: 1.4rem;"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <img src="/images/default-avatar.png" class="avatar" />
+                    }
 
-@if (connection == null)
-{
-    <p>Підключення...</p>
-}
-else
-{
-    <div class="chat-box">
-        @foreach (var msg in Messages)
-        {
-            <div><strong>@msg.Sender:</strong> @msg.Content</div>
-        }
+                    <div class="username-status">
+                        <div class="name">@DisplayHeader</div>
+                        @if (!IsGroupChat)
+                        {
+                            <div class="status @(IsOnline ? "online" : "offline")">
+                                @(IsOnline ? "Online" : "Offline")
+                                @if (IsTyping)
+                                {
+                                    <span class="typing">typing...</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
 
-        <input @bind="NewMessage" @bind:event="oninput" placeholder="Введіть повідомлення..." class="form-control" />
-        <button class="btn btn-primary mt-2" @onclick="SendMessage">Надіслати</button>
+                @if (!IsGroupChat)
+                {
+                    <div class="chat-actions-bubble">
+                        <button class="circle-btn call" title="Voice Call" @onclick="() => StartCall(false)">
+                            <i class="bi bi-telephone"></i>
+                        </button>
+                        <button class="circle-btn video" title="Video Call" @onclick="() => StartCall(true)">
+                            <i class="bi bi-camera-video"></i>
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="chat-body" @ref="messagesDiv">
+            @foreach (var msg in Messages)
+            {
+                if (msg.SenderId == "system")
+                {
+                    <div class="system-message">
+                        <span>@msg.Content</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="message-box @(msg.SenderId == CurrentUserId ? "mine" : "theirs")">
+                        <span>@msg.Content</span>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="chat-input">
+            <input @bind="NewMessage" placeholder="Message..." />
+            <button @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(NewMessage)">Send</button>
+        </div>
     </div>
-}
+
+    <div class="chat-right">
+        @if (IsChatReady)
+        {
+            <div class="task-chat-container">
+                <ChatTaskPanel ChatConnection="connection" ChatId="RoomId" />
+            </div>
+        }
+    </div>
+</div>
+
+<GroupChatMembersModal IsVisible="@showMembersModal"
+                       IsVisibleChanged="val => showMembersModal = val"
+                       ChatRoomId="RoomId" />
+
+<CallModal IsVisible="@showCallModal"
+           IsVideo="@isVideoCall"
+           OnClose="@EndCall" />
 
 @code {
     [Parameter] public int RoomId { get; set; }
 
     private HubConnection? connection;
     private string? NewMessage;
-    private List<ChatMessageDto> Messages = new();
     private string CurrentUserId = "";
+    private string DisplayHeader = "Чат";
+    private bool IsOnline = false;
+    private bool IsTyping = false;
+    private ElementReference messagesDiv;
     private string AccessToken = "";
+    private bool IsGroupChat = false;
+    private bool showMembersModal = false;
+    private bool showCallModal = false;
+    private bool isVideoCall = false;
+    private string? TargetUserId;
+    private bool IsChatReady = false;
+
+    private List<ChatMessageDto> Messages = new();
 
     protected override async Task OnInitializedAsync()
     {
-        var session = await _localStorage.GetAsync<StudyBuddy.Core.DTOs.AuthResultDto>("sessionState");
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        CurrentUserId = user.FindFirst("nameid")?.Value ?? "unknown";
+
+        var session = await _localStorage.GetAsync<AuthResultDto>("sessionState");
         AccessToken = session.Success ? session.Value.Token : "";
 
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        CurrentUserId = authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                     ?? authState.User?.FindFirst("nameid")?.Value
-                     ?? "unknown";
+        var room = await ChatRoomService.GetByIdAsync(RoomId);
+        IsGroupChat = room.IsGroup;
+
+        var existingMessages = await ChatRoomService.GetMessagesForRoomAsync(RoomId);
+        Messages = existingMessages.OrderBy(m => m.SentAt).ToList();
+
+        if (IsGroupChat)
+        {
+            DisplayHeader = room.Name;
+        }
+        else
+        {
+            var otherUserId = room.Members.FirstOrDefault(m => m.UserId != CurrentUserId)?.UserId;
+            TargetUserId = otherUserId;
+            var otherUser = await UserRepository.GetByIdAsync(otherUserId);
+            DisplayHeader = otherUser?.FullName ?? "Unknown";
+        }
 
         connection = new HubConnectionBuilder()
             .WithUrl(Navigation.ToAbsoluteUri("/chatHub"), options =>
             {
-                options.AccessTokenProvider = () => Task.FromResult(AccessToken);
+                options.AccessTokenProvider = () => Task.FromResult<string?>(AccessToken);
             })
+            .WithAutomaticReconnect()
             .Build();
 
-        connection.On<string, string, string>("NewMessage", (message, taskId, senderId) =>
+        connection.On<string, string, string>("NewMessage", async (message, _, senderId) =>
         {
-            Messages.Add(new ChatMessageDto
-                {
-                    Content = message,
-                    Sender = senderId
-                });
-            StateHasChanged();
+            Messages.Add(new ChatMessageDto { Content = message, SenderId = senderId });
+            await InvokeAsync(StateHasChanged);
+            await ScrollToBottom();
+        });
+
+        connection.On<int, string, string, string>("ReceiveSignal", async (chatId, fromUserId, type, data) =>
+        {
+            await JS.InvokeVoidAsync("receiveSignal", chatId, fromUserId, type, data);
         });
 
         await connection.StartAsync();
+        await JS.InvokeVoidAsync("storeSignalRConnection", connection); // Register in JS
         await connection.InvokeAsync("JoinChat", RoomId);
+        await ScrollToBottom();
+
+        IsChatReady = true;
     }
 
     private async Task SendMessage()
     {
-        if (!string.IsNullOrWhiteSpace(NewMessage))
+        if (connection?.State != HubConnectionState.Connected || string.IsNullOrWhiteSpace(NewMessage)) return;
+
+        await connection.InvokeAsync("SendMessage", RoomId, NewMessage, null);
+        NewMessage = "";
+        await ScrollToBottom();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        await JS.InvokeVoidAsync("blazorHelpers.scrollToBottom", messagesDiv);
+    }
+
+    private void ToggleMembersModal()
+    {
+        if (IsGroupChat)
+            showMembersModal = true;
+    }
+
+    private async void StartCall(bool video)
+    {
+        isVideoCall = video;
+        showCallModal = true;
+
+        string callText = video ? "📹 started a video call" : "📞 started a voice call";
+
+        await connection.InvokeAsync("SendMessage", RoomId, callText, null, CurrentUserId);
+
+        await Task.Delay(300); 
+
+        if (!string.IsNullOrWhiteSpace(TargetUserId))
         {
-            await connection!.InvokeAsync("SendMessage", RoomId, NewMessage, null);
-            NewMessage = "";
+            await JS.InvokeVoidAsync("eval", $"window.targetUserId = '{TargetUserId}'");
+            await JS.InvokeVoidAsync("startCall", RoomId, video);
         }
     }
 
-    private class ChatMessageDto
+
+    private void EndCall()
     {
-        public string Sender { get; set; } = "";
-        public string Content { get; set; } = "";
+        showCallModal = false;
+    }
+
+    public void Dispose()
+    {
+        if (connection is not null)
+        {
+            _ = connection.DisposeAsync();
+        }
     }
 }

@@ -11,6 +11,7 @@ namespace StudyBuddy.Repositories.Repositories
 
         public async Task<IEnumerable<ChatMessage>> GetMessagesForRoomAsync(int roomId, int skip = 0, int take = 50)
             => await _context.ChatMessages
+                .Include(m => m.Sender)
                 .Where(m => m.ChatRoomId == roomId)
                 .OrderByDescending(m => m.SentAt)
                 .Skip(skip)
@@ -22,5 +23,9 @@ namespace StudyBuddy.Repositories.Repositories
                 .Where(cr => cr.Members.Any(m => m.UserId == userId))
                 .OrderByDescending(cr => cr.CreatedAt)
                 .ToListAsync();
+        public async Task AddMessageAsync(ChatMessage message)
+        {
+            await _context.ChatMessages.AddAsync(message);
+        }
     }
 }

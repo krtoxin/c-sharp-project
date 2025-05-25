@@ -14,6 +14,6 @@ namespace StudyBuddy.Services.IServices
         Task<Subject> CreateAsync(Subject subject);
         Task<bool> UpdateAsync(int id, Subject updated);
         Task<bool> DeleteAsync(int id);
-    }
 
+    }
 }

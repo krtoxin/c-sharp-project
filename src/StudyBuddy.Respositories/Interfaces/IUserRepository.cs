@@ -11,6 +11,9 @@ namespace StudyBuddy.Repositories.Interfaces
         Task AddAsync(User user);
         Task UpdateAsync(User user);
         Task DeleteAsync(User user);
+        Task<bool> ExistsAsync(string userId);
+        Task<IEnumerable<User>> GetAllAsync();
+
     }
 
 }

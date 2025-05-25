@@ -45,5 +45,14 @@ namespace StudyBuddy.Repositories.Repositories
             _dbSet.Remove(user);
             await _context.SaveChangesAsync();
         }
+        public async Task<bool> ExistsAsync(string userId)
+        {
+            return await _dbSet.AnyAsync(u => u.Id == userId);
+        }
+        public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _dbSet.ToListAsync();
+        }
+
     }
 }

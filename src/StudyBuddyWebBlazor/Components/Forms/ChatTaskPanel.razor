@@ -1,0 +1,180 @@
+﻿@using StudyBuddy.Core.Entities
+@using StudyBuddy.Services.IServices
+@using Microsoft.AspNetCore.SignalR.Client
+@inject ISubjectService SubjectService
+@inject IStudyTaskService TaskService
+@inject ITaskAttemptService AttemptService
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="task-panel">
+    @if (Subjects == null)
+    {
+        <p>Loading subjects...</p>
+    }
+    else
+    {
+        <label class="task-select-label">Select a Subject:</label>
+        <select class="form-select" @onchange="OnSubjectSelected">
+            <option value="">-- Choose Subject --</option>
+            @foreach (var subj in Subjects)
+            {
+                <option value="@subj.Id">@subj.Name</option>
+            }
+        </select>
+
+        @if (AvailableTasks != null && SelectedSubjectId != 0)
+        {
+            <label class="task-select-label">Select a Task:</label>
+            <select class="form-select" @onchange="OnTaskSelected">
+                <option value="">-- Choose Task --</option>
+                @foreach (var task in AvailableTasks)
+                {
+                    <option value="@task.Id">@task.Question</option>
+                }
+            </select>
+        }
+
+        @if (SelectedTask != null)
+        {
+            <div class="task-box">
+                <div class="task-question">@SelectedTask.Question</div>
+
+                @if (!IsSolved)
+                {
+                    <input class="form-control answer-input" placeholder="Your answer..." @bind="UserAnswer" />
+
+                    <button class="btn btn-outline-success" @onclick="CheckAnswer">Check Answer</button>
+                }
+
+                @if (AnswerChecked)
+                {
+                    <div class="mt-2 @(IsAnswerCorrect ? "text-success" : "text-danger")">
+                        @(IsAnswerCorrect ? "✅ Correct!" : "❌ Incorrect. Try again.")
+                    </div>
+                }
+
+                <button class="btn btn-outline-danger" @onclick="CloseTask">Close Task</button>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public HubConnection? ChatConnection { get; set; }
+    [Parameter] public int ChatId { get; set; }
+
+    private List<Subject> Subjects = new();
+    private List<StudyTask> AvailableTasks = new();
+    private StudyTask? SelectedTask;
+    private string UserAnswer = "";
+    private bool AnswerChecked = false;
+    private bool IsAnswerCorrect = false;
+    private bool IsSolved = false;
+    private int SelectedSubjectId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Subjects = (await SubjectService.GetAllAsync()).ToList();
+
+        if (ChatConnection is not null)
+        {
+            ChatConnection.On<int>("TaskSolved", id =>
+            {
+                if (SelectedTask?.Id == id)
+                {
+                    IsSolved = true;
+                    AnswerChecked = true;
+                    IsAnswerCorrect = true;
+                    StateHasChanged();
+                }
+            });
+
+            ChatConnection.On("TaskClosed", () =>
+            {
+                SelectedTask = null;
+                UserAnswer = "";
+                AnswerChecked = false;
+                IsAnswerCorrect = false;
+                IsSolved = false;
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task OnSubjectSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int subjectId))
+        {
+            SelectedSubjectId = subjectId;
+            AvailableTasks = (await TaskService.GetAllTasksAsync())
+                .Where(t => t.SubTopic.SubjectId == subjectId)
+                .ToList();
+        }
+    }
+
+    private async Task OnTaskSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int taskId))
+        {
+            SelectedTask = await TaskService.GetByIdAsync(taskId);
+            AnswerChecked = false;
+            UserAnswer = "";
+            IsSolved = false;
+
+            if (ChatConnection?.State == HubConnectionState.Connected && SelectedTask != null)
+            {
+                var dto = new TaskDto
+                {
+                    Id = SelectedTask.Id,
+                    Question = SelectedTask.Question,
+                    CorrectAnswer = SelectedTask.CorrectAnswer,
+                    SolutionHint = SelectedTask.SolutionHint,
+                    TaskType = SelectedTask.TaskType
+                };
+                await ChatConnection.SendAsync("SelectTask", ChatId, dto);
+            }
+        }
+    }
+
+    private async Task CheckAnswer()
+    {
+        if (SelectedTask == null || string.IsNullOrWhiteSpace(UserAnswer)) return;
+
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst("nameid")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId)) return;
+
+        IsAnswerCorrect = string.Equals(
+            UserAnswer.Trim(),
+            SelectedTask.CorrectAnswer?.Trim(),
+            StringComparison.OrdinalIgnoreCase);
+
+        AnswerChecked = true;
+
+        await AttemptService.SaveAttemptAsync(new TaskAttempt
+        {
+            TaskId = SelectedTask.Id,
+            IsCorrect = IsAnswerCorrect,
+            UserId = userId
+        });
+
+        if (IsAnswerCorrect && ChatConnection?.State == HubConnectionState.Connected)
+        {
+            await ChatConnection.SendAsync("TaskSolved", ChatId, SelectedTask.Id);
+        }
+    }
+
+    private async Task CloseTask()
+    {
+        SelectedTask = null;
+        UserAnswer = "";
+        AnswerChecked = false;
+        IsSolved = false;
+
+        if (ChatConnection?.State == HubConnectionState.Connected)
+        {
+            await ChatConnection.SendAsync("TaskClosed", ChatId);
+        }
+    }
+}

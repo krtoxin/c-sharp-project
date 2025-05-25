@@ -1,0 +1,180 @@
+﻿@page "/chats"
+@using StudyBuddy.Core.Entities
+@using StudyBuddy.Core.DTOs
+@using StudyBuddy.Services.IServices
+@using StudyBuddyWebBlazor.Components.Forms
+@inject IChatRoomService ChatRoomService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JSRuntime
+
+<h3 class="mb-3 d-flex justify-content-between align-items-center">
+    <span>💬 Your Chats</span>
+    <button class="btn btn-primary btn-sm" @onclick="ShowCreateGroupModal">+ New Chat</button>
+</h3>
+
+@if (showCreateGroupModal)
+{
+    <CreateGroupChatModal IsVisible="@showCreateGroupModal"
+                          IsVisibleChanged="@(visible => showCreateGroupModal = visible)"
+                          OnGroupCreated="OnChatCreated" />
+}
+
+<input class="form-control mb-3" placeholder="Search chats..." @bind="SearchText" @bind:event="oninput" />
+
+@if (filteredChatRooms is null)
+{
+    <p>Loading chat rooms...</p>
+}
+else if (!filteredChatRooms.Any())
+{
+    <p>No chats match your search.</p>
+}
+else
+{
+    <div class="chat-list">
+        @foreach (var room in filteredChatRooms)
+        {
+            <div class="chat-list-item d-flex justify-content-between align-items-center" title="@room.Name">
+                <div class="d-flex align-items-center" style="cursor:pointer" @onclick="() => OpenRoom(room.Id)">
+                    @if (room.IsGroup)
+                    {
+                        <div class="avatar d-flex align-items-center justify-content-center">
+                            <i class="bi bi-people-fill" style="font-size: 1.4rem;"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="avatar">@GetAvatarInitial(room.Name)</div>
+                    }
+                    <div class="chat-info">
+                        <div class="chat-header">
+                            <strong>@room.Name</strong>
+                            <span class="timestamp">@room.CreatedAt.ToLocalTime().ToString("HH:mm")</span>
+                        </div>
+                        <div class="chat-preview">
+                            <em>@(room.LastMessage ?? "No messages yet.")</em>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn chat-delete-btn ms-2" @onclick="() => DeleteChat(room.Id)">Leave 🗑️</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ChatRoomDto> ChatRooms = new();
+    private List<ChatRoomDto> filteredChatRooms = new();
+    private bool showCreateGroupModal = false;
+
+    private string searchTextBacking = "";
+    private string SearchText
+    {
+        get => searchTextBacking;
+        set
+        {
+            if (searchTextBacking != value)
+            {
+                searchTextBacking = value;
+                FilterChats();
+            }
+        }
+    }
+
+    public class ChatRoomDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+        public bool IsGroup { get; set; }
+        public List<string> MemberNames { get; set; } = new();
+        public string? LastMessage { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChatRooms();
+    }
+
+    private async Task LoadChatRooms()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user?.FindFirst("nameid")?.Value ?? user?.FindFirst("id")?.Value ?? "";
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var rooms = await ChatRoomService.GetRoomsForUserAsync(userId);
+
+            ChatRooms = rooms.Select(r => new ChatRoomDto
+            {
+                Id = r.Id,
+                Name = r.IsGroup ? r.Name : r.Members?.FirstOrDefault(m => m.UserId != userId)?.User?.FullName ?? "Приватний чат",
+                IsGroup = r.IsGroup,
+                CreatedAt = r.CreatedAt,
+                MemberNames = r.Members?
+                    .Where(m => m.User != null)
+                    .Select(m => m.User.FullName)
+                    .ToList() ?? new List<string>(),
+                LastMessage = r.Messages?.OrderByDescending(m => m.SentAt).FirstOrDefault()?.Content ?? null
+            }).ToList();
+
+            FilterChats();
+            await InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            Console.WriteLine("[DEBUG] No valid userId found for loading chat rooms.");
+        }
+    }
+
+    private void FilterChats()
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            filteredChatRooms = ChatRooms;
+        }
+        else
+        {
+            filteredChatRooms = ChatRooms
+                .Where(r =>
+                    (r.IsGroup && r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ||
+                    (!r.IsGroup && r.MemberNames.Any(name => name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))))
+                .ToList();
+        }
+    }
+
+    private void OpenRoom(int roomId)
+    {
+        Navigation.NavigateTo($"/chat/{roomId}");
+    }
+
+    private string GetAvatarInitial(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        return name.Substring(0, 1).ToUpper();
+    }
+
+    private void ShowCreateGroupModal() => showCreateGroupModal = true;
+
+    private async Task OnChatCreated(int newRoomId)
+    {
+        showCreateGroupModal = false;
+        searchTextBacking = "";
+        await LoadChatRooms();
+        Navigation.NavigateTo($"/chat/{newRoomId}");
+    }
+
+    private async Task DeleteChat(int roomId)
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User?.FindFirst("nameid")?.Value ?? authState.User?.FindFirst("id")?.Value ?? "";
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await ChatRoomService.LeaveOrDeleteChatAsync(roomId, userId);
+            await LoadChatRooms();
+        }
+    }
+}

@@ -11,5 +11,7 @@ namespace StudyBuddy.Services.IServices
     {
         Task SaveAttemptAsync(TaskAttempt attempt);
         Task<List<TaskAttempt>> GetAttemptsByTaskIdAsync(int taskId);
+        Task<List<TaskAttempt>> GetAttemptsByUserAndTaskIdAsync(string userId, int taskId);
+
     }
 }

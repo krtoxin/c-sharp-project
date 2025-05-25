@@ -26,12 +26,14 @@
                 <NavLink href="/dashboard" class="nav-link" activeClass="active">
                     <i class="bi bi-house"></i> Dashboard
                 </NavLink>
+                <a class="nav-link" href="/rules">
+                    <i class="bi bi-shield-lock"></i> Rules
+                </a>
+
 
                 @if (IsInRole("Manager") || IsInRole("Admin"))
                 {
-                    <NavLink href="/tasks" class="nav-link" activeClass="active">
-                        <i class="bi bi-check2-circle"></i> Tasks
-                    </NavLink>
+                    
                     <NavLink href="/subjects" class="nav-link" activeClass="active">
                         <i class="bi bi-journal-bookmark"></i> Subjects
                     </NavLink>
@@ -50,9 +52,15 @@
                     </NavLink>
                 }
 
-                <NavLink href="/rooms" class="nav-link" activeClass="active">
-                    <i class="bi bi-collection"></i> Rooms
-                </NavLink>
+                @if (IsInRole("User") || IsInRole("Admin") || IsInRole("Manager"))
+                {
+                    <NavLink href="/chats" class="nav-link" activeClass="active">
+                        <i class="bi bi-chat-dots"></i> Chat
+                    </NavLink>
+                    <NavLink href="/tasks" class="nav-link" activeClass="active">
+                        <i class="bi bi-check2-circle"></i> Tasks
+                    </NavLink>
+                }
 
                 <NavLink href="/settings" class="nav-link" activeClass="active">
                     <i class="bi bi-gear"></i> Settings
@@ -70,9 +78,10 @@
                     <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
                     <button class="icon-btn" title="Calendar"><i class="bi bi-calendar3"></i></button>
                     <button class="icon-btn" title="What's New"><i class="bi bi-lightbulb"></i></button>
-                    <div class="profile-menu" title="Profile">
+                    <NavLink href="/profile" class="profile-menu" title="Profile">
                         <i class="bi bi-person-circle" style="font-size: 1.5rem; color: pink;"></i>
-                    </div>
+                    </NavLink>
+
                 </div>
             </header>
 

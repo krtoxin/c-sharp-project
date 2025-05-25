@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using StudyBuddy.Core.DTOs;
 using StudyBuddy.Core.Entities;
 using StudyBuddy.Core.Enums;
 using StudyBuddy.Repositories.Interfaces;
@@ -14,15 +15,19 @@ namespace StudyBuddy.Services.Services
         private readonly IStudyTaskRepository _taskRepo;
         private readonly ITaskOptionRepository _optionRepo;
         private readonly ISubTopicRepository _subTopicRepo;
+        private readonly IChatRoomRepository _chatRoomRepo;
 
         public StudyTaskService(
             IStudyTaskRepository taskRepo,
             ITaskOptionRepository optionRepo,
-            ISubTopicRepository subTopicRepo)
+            ISubTopicRepository subTopicRepo,
+            IChatRoomRepository chatRoomRepo)
         {
             _taskRepo = taskRepo;
             _optionRepo = optionRepo;
             _subTopicRepo = subTopicRepo;
+            _chatRoomRepo = chatRoomRepo;
+
         }
 
         public async Task<IEnumerable<StudyTask>> GetAllAsync()
@@ -102,19 +107,32 @@ namespace StudyBuddy.Services.Services
             }
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<ApiResult> DeleteAsync(int id)
         {
             var existing = await _taskRepo.GetByIdAsync(id);
-            if (existing == null) return;
+            if (existing == null)
+                return ApiResult.Failure("Task not found.");
+
+            var linkedChats = await _chatRoomRepo.FindAsync(r => r.TaskId == id);
+            if (linkedChats.Any())
+                return ApiResult.Failure("Cannot delete task: it is linked to existing chat rooms.");
 
             await _optionRepo.DeleteByTaskIdAsync(id);
             await _taskRepo.DeleteAsync(existing);
             await _taskRepo.SaveAsync();
+
+            return ApiResult.Success();
         }
+
 
         public async Task<List<SubTopic>> GetSubTopicsBySubjectIdAsync(int subjectId)
         {
             return (await _subTopicRepo.GetBySubjectIdAsync(subjectId)).ToList();
+        }
+
+        public async Task<IEnumerable<StudyTask>> GetAllTasksAsync()
+        {
+            return await _taskRepo.GetAllAsync();
         }
 
     }

@@ -17,7 +17,7 @@ namespace StudyBuddy.Core.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -110,7 +110,12 @@ namespace StudyBuddy.Core.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("TaskId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
 
                     b.ToTable("ChatRooms");
                 });
@@ -326,6 +331,9 @@ namespace StudyBuddy.Core.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -337,12 +345,18 @@ namespace StudyBuddy.Core.Migrations
                     b.Property<bool>("IsOnline")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPremiumUser")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("LastActive")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("PremiumUntil")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ProfileImage")
                         .HasColumnType("text");
@@ -434,6 +448,15 @@ namespace StudyBuddy.Core.Migrations
                     b.Navigation("ChatRoom");
 
                     b.Navigation("Sender");
+
+                    b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("StudyBuddy.Core.Entities.ChatRoom", b =>
+                {
+                    b.HasOne("StudyBuddy.Core.Entities.StudyTask", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId");
 
                     b.Navigation("Task");
                 });
