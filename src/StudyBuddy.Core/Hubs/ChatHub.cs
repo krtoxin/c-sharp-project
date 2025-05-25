@@ -107,7 +107,11 @@ namespace StudyBuddy.Core.Hubs
 
         public async Task SendSignal(int chatId, string targetUserId, string type, string data)
         {
-            await Clients.User(targetUserId).SendAsync("ReceiveSignal", chatId, Context.UserIdentifier, type, data);
+            string? senderId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? Context.User?.FindFirst("nameid")?.Value
+                            ?? "unknown";
+
+            await Clients.User(targetUserId).SendAsync("ReceiveSignal", chatId, senderId, type, data);
         }
 
     }
