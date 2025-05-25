@@ -89,7 +89,9 @@
     <div class="chat-right">
         @if (IsChatReady)
         {
-            <ChatTaskPanel ChatConnection="connection" ChatId="RoomId" />
+            <div class="task-chat-container">
+                <ChatTaskPanel ChatConnection="connection" ChatId="RoomId" />
+            </div>
         }
     </div>
 

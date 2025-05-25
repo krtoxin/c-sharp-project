@@ -63,25 +63,9 @@
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.3s ease;
-    width: 100%; 
+    width: 100%;
     min-height: 70px;
 }
-
-    .chat-list-item button.btn-outline-danger {
-        font-size: 1.1rem;
-        padding: 6px 12px;
-        border-radius: 8px;
-        border: 1px solid #ff4d4f;
-        background-color: transparent;
-        color: #ff4d4f;
-        transition: background 0.2s ease;
-    }
-
-        .chat-list-item button.btn-outline-danger:hover {
-            background-color: #ff4d4f;
-            color: white;
-        }
-
 
 .circle-btn {
     background: rgba(255, 255, 255, 0.1);
@@ -119,9 +103,18 @@
 .avatar {
     width: 48px;
     height: 48px;
+    min-width: 48px;
+    min-height: 48px;
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-right: 12px;
-    border: 2px solid #fff;
+    background-color: #5865f2;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    user-select: none;
 }
 
 .username-status .name {
@@ -288,20 +281,6 @@
     max-width: fit-content;
 }
 
-.avatar {
-    width: 48px;
-    height: 48px;
-    background-color: #5865f2;
-    color: white;
-    font-weight: 700;
-    font-size: 22px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
-    user-select: none;
-}
 
 .task-panel {
     background-color: #2d124d;
@@ -463,9 +442,9 @@ input.form-control {
     cursor: pointer;
 }
 
-.btn-check:hover {
-    background-color: #218838;
-}
+    .btn-check:hover {
+        background-color: #218838;
+    }
 
 .btn-close {
     background-color: #dc3545;
@@ -477,6 +456,42 @@ input.form-control {
     cursor: pointer;
 }
 
-.btn-close:hover {
-    background-color: #c82333;
+    .btn-close:hover {
+        background-color: #c82333;
+    }
+
+.chat-delete-btn {
+    font-size: 1rem;
+    padding: 6px 14px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ff4d4f;
+    background-color: #5c1c3a;
+    color: #fff;
+    transition: background 0.2s ease;
+    font-weight: 600;
+    width: fit-content;
+}
+
+    .chat-delete-btn:hover {
+        background-color: #ff4d4f;
+        color: white;
+    }
+
+
+.chat-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background-color: #c74ded;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
+    font-weight: bold;
+    color: white;
+    width: fit-content;
 }
