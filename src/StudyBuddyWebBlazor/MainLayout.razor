@@ -26,6 +26,10 @@
                 <NavLink href="/dashboard" class="nav-link" activeClass="active">
                     <i class="bi bi-house"></i> Dashboard
                 </NavLink>
+                <a class="nav-link" href="/rules">
+                    <i class="bi bi-shield-lock"></i> Rules
+                </a>
+
 
                 @if (IsInRole("Manager") || IsInRole("Admin"))
                 {

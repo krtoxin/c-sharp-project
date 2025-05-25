@@ -1,0 +1,62 @@
+﻿.rules-wrapper {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.4s ease;
+    color: #fff;
+}
+
+body.light-theme .rules-wrapper {
+    background: #fff;
+    color: #111;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.rules-wrapper h1 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: #ff77ff;
+}
+
+body.light-theme .rules-wrapper h1 {
+    color: #5865f2;
+}
+
+.rules-section {
+    margin-bottom: 2rem;
+}
+
+    .rules-section h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.8rem;
+        color: #ff77ff;
+    }
+
+body.light-theme .rules-section h2 {
+    color: #5865f2;
+}
+
+.rules-section ul {
+    list-style: disc;
+    margin-left: 1.5rem;
+    color: #ccc;
+}
+
+body.light-theme .rules-section ul {
+    color: #333;
+}
+
+.rules-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+.rules-section a {
+    color: #ffd700;
+}
+
+body.light-theme .rules-section a {
+    color: #007bff;
+}

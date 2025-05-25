@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.JSInterop
-@using System.Security.Claims
 @using Microsoft.AspNetCore.SignalR.Client
 @using StudyBuddy.Core.DTOs
 @using StudyBuddy.Repositories.Interfaces
@@ -51,10 +50,10 @@
                 @if (!IsGroupChat)
                 {
                     <div class="chat-actions-bubble">
-                        <button class="circle-btn call" title="Voice Call">
+                        <button class="circle-btn call" title="Voice Call" @onclick="() => StartCall(false)">
                             <i class="bi bi-telephone"></i>
                         </button>
-                        <button class="circle-btn video" title="Video Call">
+                        <button class="circle-btn video" title="Video Call" @onclick="() => StartCall(true)">
                             <i class="bi bi-camera-video"></i>
                         </button>
                     </div>
@@ -94,17 +93,18 @@
             </div>
         }
     </div>
-
 </div>
 
 <GroupChatMembersModal IsVisible="@showMembersModal"
                        IsVisibleChanged="val => showMembersModal = val"
                        ChatRoomId="RoomId" />
 
+<CallModal IsVisible="@showCallModal"
+           IsVideo="@isVideoCall"
+           OnClose="@EndCall" />
 
 @code {
     [Parameter] public int RoomId { get; set; }
-    private bool IsChatReady = false;
 
     private HubConnection? connection;
     private string? NewMessage;
@@ -116,6 +116,10 @@
     private string AccessToken = "";
     private bool IsGroupChat = false;
     private bool showMembersModal = false;
+    private bool showCallModal = false;
+    private bool isVideoCall = false;
+    private string? TargetUserId;
+    private bool IsChatReady = false;
 
     private List<ChatMessageDto> Messages = new();
 
@@ -133,7 +137,7 @@
 
         var existingMessages = await ChatRoomService.GetMessagesForRoomAsync(RoomId);
         Messages = existingMessages.OrderBy(m => m.SentAt).ToList();
-        IsGroupChat = room.IsGroup;
+
         if (IsGroupChat)
         {
             DisplayHeader = room.Name;
@@ -141,6 +145,7 @@
         else
         {
             var otherUserId = room.Members.FirstOrDefault(m => m.UserId != CurrentUserId)?.UserId;
+            TargetUserId = otherUserId;
             var otherUser = await UserRepository.GetByIdAsync(otherUserId);
             DisplayHeader = otherUser?.FullName ?? "Unknown";
         }
@@ -160,18 +165,23 @@
             await ScrollToBottom();
         });
 
+        connection.On<int, string, string, string>("ReceiveSignal", async (chatId, fromUserId, type, data) =>
+        {
+            await JS.InvokeVoidAsync("receiveSignal", chatId, fromUserId, type, data);
+        });
+
         await connection.StartAsync();
+        await JS.InvokeVoidAsync("storeSignalRConnection", connection); // Register in JS
         await connection.InvokeAsync("JoinChat", RoomId);
         await ScrollToBottom();
+
         IsChatReady = true;
-
     }
-
-
 
     private async Task SendMessage()
     {
         if (connection?.State != HubConnectionState.Connected || string.IsNullOrWhiteSpace(NewMessage)) return;
+
         await connection.InvokeAsync("SendMessage", RoomId, NewMessage, null);
         NewMessage = "";
         await ScrollToBottom();
@@ -188,9 +198,33 @@
             showMembersModal = true;
     }
 
+    private async void StartCall(bool video)
+    {
+        isVideoCall = video;
+        showCallModal = true;
+
+        string callText = video ? "📹 started a video call" : "📞 started a voice call";
+
+        await connection.InvokeAsync("SendMessage", RoomId, callText, null, CurrentUserId);
+
+        await Task.Delay(300); 
+
+        if (!string.IsNullOrWhiteSpace(TargetUserId))
+        {
+            await JS.InvokeVoidAsync("eval", $"window.targetUserId = '{TargetUserId}'");
+            await JS.InvokeVoidAsync("startCall", RoomId, video);
+        }
+    }
+
+
+    private void EndCall()
+    {
+        showCallModal = false;
+    }
+
     public void Dispose()
     {
-        if (connection != null)
+        if (connection is not null)
         {
             _ = connection.DisposeAsync();
         }

@@ -19,10 +19,15 @@ namespace StudyBuddy.Core.Hubs
             _dbContext = dbContext;
         }
 
-        public async Task SendMessage(int chatId, string message, int? taskId)
+        public async Task SendMessage(int chatId, string message, int? taskId, string? senderOverride = null)
         {
-            string? senderId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                               ?? Context.User?.FindFirst("nameid")?.Value;
+            string? senderId = senderOverride;
+
+            if (string.IsNullOrWhiteSpace(senderId))
+            {
+                senderId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? Context.User?.FindFirst("nameid")?.Value;
+            }
 
             if (string.IsNullOrEmpty(senderId))
             {
@@ -68,6 +73,7 @@ namespace StudyBuddy.Core.Hubs
                 .SendAsync("NewMessage", message, taskId?.ToString() ?? "", senderId);
         }
 
+
         public async Task JoinChat(int chatId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, chatId.ToString());
@@ -97,6 +103,11 @@ namespace StudyBuddy.Core.Hubs
         {
             await Clients.Group(chatId.ToString())
                 .SendAsync("TaskClosed");
+        }
+
+        public async Task SendSignal(int chatId, string targetUserId, string type, string data)
+        {
+            await Clients.User(targetUserId).SendAsync("ReceiveSignal", chatId, Context.UserIdentifier, type, data);
         }
 
     }

@@ -1,0 +1,37 @@
+﻿@if (IsVisible)
+{
+    <div class="modal-backdrop"></div>
+    <div class="call-modal">
+        <div class="video-container">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay muted playsinline class="local-video"></video>
+        </div>
+        <button class="btn btn-danger mt-3" @onclick="OnClose">End Call</button>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public bool IsVideo { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    [Inject] private IJSRuntime JS { get; set; }
+
+    private bool shouldStartCall = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible)
+            shouldStartCall = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (shouldStartCall)
+        {
+            shouldStartCall = false;
+            await Task.Delay(300); 
+            await JS.InvokeVoidAsync("startCall", true);
+        }
+    }
+}

@@ -1,0 +1,45 @@
+﻿@page "/rules"
+
+<div class="rules-wrapper">
+    <h1><i class="bi bi-shield-check"></i> Community Rules & Support</h1>
+
+    <section class="rules-section">
+        <h2><i class="bi bi-chat-dots"></i> Chat Behavior</h2>
+        <ul>
+            <li>No hate speech, discrimination, or harassment.</li>
+            <li>No excessive swearing or offensive usernames.</li>
+            <li>No spam or self-promotion without permission.</li>
+            <li>Respect others' privacy. No doxxing or sharing private info.</li>
+        </ul>
+    </section>
+
+    <section class="rules-section">
+        <h2><i class="bi bi-person-badge"></i> Profile & Avatar</h2>
+        <ul>
+            <li>Use appropriate profile pictures (no NSFW or violent imagery).</li>
+            <li>Display names must be respectful and not impersonate others.</li>
+        </ul>
+    </section>
+
+    <section class="rules-section">
+        <h2><i class="bi bi-life-preserver"></i> Need Help?</h2>
+        <p>If you have issues or questions, reach out to us:</p>
+        <ul>
+            <li>Email: <a href="mailto:kirakutas@gmail.com">kirakutas@gmail.com</a></li>
+        </ul>
+
+        <button class="btn btn-primary mt-3" @onclick="ContactSupport">
+            <i class="bi bi-envelope-fill"></i> Contact Support
+        </button>
+    </section>
+</div>
+
+@code {
+    private void ContactSupport()
+    {
+        NavigationManager.NavigateTo("mailto:kirakutas@gmail.com");
+    }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+}
