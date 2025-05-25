@@ -42,5 +42,15 @@ namespace StudyBuddy.Services.Services
                 .OrderByDescending(a => a.AttemptTime)
                 .ToListAsync();
         }
+
+        public async Task<List<TaskAttempt>> GetAttemptsByUserAndTaskIdAsync(string userId, int taskId)
+        {
+            return await _context.TaskAttempts
+                .Include(a => a.User)
+                .Where(a => a.TaskId == taskId && a.UserId == userId)
+                .OrderByDescending(a => a.AttemptTime)
+                .ToListAsync();
+        }
+
     }
 }
