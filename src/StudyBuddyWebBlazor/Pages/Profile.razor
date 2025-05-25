@@ -31,9 +31,9 @@
     @if (CurrentUser?.IsPremiumUser == true)
     {
         <div class="badge-premium">
-            💎 Premium User
+            💎 Premium User 💎
             <div class="premium-date">
-                Діє до: @CurrentUser.PremiumUntil?.ToLocalTime().ToString("dd.MM.yyyy")
+                Untill: @CurrentUser.PremiumUntil?.ToLocalTime().ToString("dd.MM.yyyy")
             </div>
         </div>
     }
@@ -169,7 +169,7 @@
             CurrentUser.IsPremiumUser = true;
             CurrentUser.PremiumUntil = DateTime.UtcNow.AddMonths(1);
             await UserService.UpdateAsync(CurrentUser);
-            StatusMessage = "🎉 Ви тепер Premium користувач!";
+            StatusMessage = "🎉 You are now a Premium user!";
         }
     }
 

@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System;
-using System.Linq;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using StudyBuddy.Core.Entities;
 using StudyBuddy.Core.Data;
+using StudyBuddy.Core.DTOs;
+using StudyBuddy.Core.Entities;
 
 namespace StudyBuddy.Core.Hubs
 {
@@ -80,5 +81,23 @@ namespace StudyBuddy.Core.Hubs
                 await Clients.All.SendAsync("UserOnlineStatus", userId, isOnline);
             }
         }
+        public async Task SelectTask(int chatId, TaskDto task)
+        {
+            await Clients.Group(chatId.ToString())
+                .SendAsync("TaskSelected", task);
+        }
+
+        public async Task SolveTask(int chatId, int taskId)
+        {
+            await Clients.Group(chatId.ToString())
+                .SendAsync("TaskSolved", taskId);
+        }
+
+        public async Task CloseTask(int chatId)
+        {
+            await Clients.Group(chatId.ToString())
+                .SendAsync("TaskClosed");
+        }
+
     }
 }

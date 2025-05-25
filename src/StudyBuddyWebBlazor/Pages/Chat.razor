@@ -89,16 +89,16 @@
     <div class="chat-right">
         @if (IsChatReady)
         {
-            <ChatTaskPanel />
+            <ChatTaskPanel ChatConnection="connection" ChatId="RoomId" />
         }
     </div>
-
 
 </div>
 
 <GroupChatMembersModal IsVisible="@showMembersModal"
                        IsVisibleChanged="val => showMembersModal = val"
                        ChatRoomId="RoomId" />
+
 
 @code {
     [Parameter] public int RoomId { get; set; }
@@ -164,6 +164,8 @@
         IsChatReady = true;
 
     }
+
+
 
     private async Task SendMessage()
     {

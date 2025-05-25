@@ -303,3 +303,180 @@
     user-select: none;
 }
 
+.task-panel {
+    background-color: #2d124d;
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.task-select-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: #e0d5ff;
+}
+
+.form-select {
+    background-color: #3a2a57;
+    color: #fff;
+    border: 2px solid #a47cff;
+    border-radius: 8px;
+    padding: 0.5rem;
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+    .form-select option {
+        background-color: #3a2a57;
+        color: white;
+    }
+
+.task-box {
+    background-color: #461862;
+    border: 2px solid #a47cff;
+    border-radius: 14px;
+    padding: 1.2rem;
+    margin-top: 1rem;
+}
+
+.task-question {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+input.form-control {
+    background-color: #3a2a57;
+    border: 1px solid #8a6bc8;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.5rem 0.8rem;
+    width: 100%;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s ease;
+    width: 100%;
+    margin-top: 0.6rem;
+}
+
+.btn-outline-success {
+    background-color: transparent;
+    border: 2px solid #28a745;
+    color: #28a745;
+}
+
+    .btn-outline-success:hover {
+        background-color: #28a745;
+        color: white;
+    }
+
+.btn-outline-danger {
+    background-color: transparent;
+    border: 2px solid #dc3545;
+    color: #dc3545;
+}
+
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+
+.alert-success {
+    background-color: #2c6e49;
+    color: #caffbf;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.8rem;
+}
+
+.text-success {
+    color: #4be67a;
+}
+
+.text-danger {
+    color: #ff6b6b;
+}
+
+.task-chat-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.pending-task-block {
+    background-color: #4a2b6d;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+    border: 2px dashed #a47cff;
+}
+
+.task-question-box {
+    font-size: 1rem;
+    font-weight: 500;
+    background-color: #3a2a57;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #8a6bc8;
+    color: #fff;
+}
+
+.answer-input {
+    background-color: #3a2a57;
+    color: white;
+    border: 1px solid #8a6bc8;
+    border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    width: 100%;
+}
+
+.task-button-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-check {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-check:hover {
+    background-color: #218838;
+}
+
+.btn-close {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-close:hover {
+    background-color: #c82333;
+}
