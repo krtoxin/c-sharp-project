@@ -75,6 +75,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 
+
 builder.Services.AddScoped<ITaskOptionRepository, TaskOptionRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IStudyTaskRepository, StudyTaskRepository>();
@@ -99,6 +100,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IChatRoomService, ChatRoomService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ITaskAttemptService, TaskAttemptService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<ChatStateService>();
 
 

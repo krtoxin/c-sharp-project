@@ -1,5 +1,6 @@
-﻿@inject ReminderService ReminderService
-@using StudyBuddy.Core.Entities
+﻿@using StudyBuddy.Services.IServices
+@inject AuthenticationStateProvider AuthProvider
+@inject IReminderService ReminderService
 
 @if (IsOpen)
 {
@@ -36,11 +37,20 @@
     {
         if (IsOpen)
         {
-            Notifications = (await ReminderService.GetUpcomingReminders() ?? new List<Reminder>())
-                .Where(r => r.RemindAt <= DateTime.Now && !r.IsSent)
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst("nameid")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                Notifications = new List<Reminder>();
+                return;
+            }
+
+            Notifications = (await ReminderService.GetUpcomingRemindersAsync(userId))
+                .Where(r => !r.IsSent) 
                 .OrderByDescending(r => r.RemindAt)
                 .Take(5)
                 .ToList();
         }
     }
+
 }

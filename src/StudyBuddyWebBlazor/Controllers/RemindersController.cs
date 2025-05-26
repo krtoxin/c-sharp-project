@@ -1,76 +1,41 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using StudyBuddy.Core.Data;
-using StudyBuddy.Core.Entities;
+using StudyBuddy.Core.DTOs;
 using StudyBuddy.Services.IServices;
 
-namespace StudyBuddyWebBlazor.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class RemindersController : ControllerBase
 {
-    [Authorize] 
-    [ApiController]
-    [Route("api/[controller]")]
-    public class RemindersController : ControllerBase
+    private readonly IReminderService _reminderService;
+
+    public RemindersController(IReminderService reminderService)
     {
-        private readonly AppDbContext _context;
-        private readonly IUserService _userService;
+        _reminderService = reminderService;
+    }
 
-        public RemindersController(AppDbContext context, IUserService userService)
-        {
-            _context = context;
-            _userService = userService;
-        }
+    [HttpPost]
+    public async Task<IActionResult> PostReminder([FromBody] ReminderDto dto)
+    {
+        var userId = User.FindFirst("nameid")?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-        [HttpPost]
-        public async Task<IActionResult> PostReminder([FromBody] Reminder model)
-        {
-            var email = User.Identity?.Name;
+        dto.UserId = userId;
 
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                Console.WriteLine("❌ No identity found in token.");
-                return Unauthorized("User identity missing.");
-            }
+        await _reminderService.CreateReminderAsync(dto);
+        return Ok();
+    }
 
-            var user = await _userService.FindByEmailAsync(email);
-            if (user == null)
-            {
-                Console.WriteLine($"❌ No user found for email: {email}");
-                return Unauthorized("User not found.");
-            }
+    [HttpGet("upcoming")]
+    public async Task<IActionResult> GetUpcomingReminders()
+    {
+        var userId = User.FindFirst("nameid")?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
-            model.UserId = user.Id;
-
-            _context.Reminders.Add(model);
-            await _context.SaveChangesAsync();
-
-            Console.WriteLine($"✅ Saved Reminder for {user.Email}");
-            return Ok(model);
-        }
-
-        [HttpGet("upcoming")]
-        public async Task<IActionResult> GetUpcomingReminders()
-        {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                Console.WriteLine("❌ No identity in JWT.");
-                return Unauthorized("User identity missing.");
-            }
-
-            var user = await _userService.FindByEmailAsync(email);
-            if (user == null)
-            {
-                Console.WriteLine($"❌ User not found: {email}");
-                return Unauthorized("User not found.");
-            }
-
-            var reminders = await _context.Reminders
-                .Where(r => r.UserId == user.Id && !r.IsSent && r.RemindAt <= DateTime.UtcNow)
-                .OrderBy(r => r.RemindAt)
-                .ToListAsync();
-
-            return Ok(reminders);
-        }
+        var reminders = await _reminderService.GetUpcomingRemindersAsync(userId);
+        return Ok(reminders);
     }
 }

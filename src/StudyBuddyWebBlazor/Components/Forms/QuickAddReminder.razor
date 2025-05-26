@@ -1,4 +1,6 @@
-﻿@inject ReminderService ReminderService
+﻿@using StudyBuddy.Services.IServices
+@inject IReminderService ReminderService
+@inject AuthenticationStateProvider AuthProvider
 
 @if (IsOpen)
 {
@@ -12,7 +14,7 @@
 
             <div>
                 <label>Custom Message</label>
-                <input @bind="Reminder.CustomMessage" placeholder="E.g. Study math!" />
+                <input @bind="CustomMessage" placeholder="E.g. Study math!" />
             </div>
 
             <div>
@@ -24,7 +26,7 @@
 
             <div>
                 <label>Notify Before</label>
-                <select @bind="Reminder.NotifyMinutesBefore">
+                <select @bind="NotifyMinutesBefore">
                     <option value="5">5 minutes</option>
                     <option value="15">15 minutes</option>
                     <option value="30">30 minutes</option>
@@ -43,27 +45,40 @@
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
 
-    private Reminder Reminder = new()
-        {
-            RemindAt = DateTime.Now.AddMinutes(30),
-            NotifyMinutesBefore = 60
-        };
+    private string CustomMessage { get; set; } = string.Empty;
+    private DateTime RemindAt { get; set; } = DateTime.Now.AddMinutes(30);
+    private int NotifyMinutesBefore { get; set; } = 60;
 
-    private string formattedRemindAt =>
-        Reminder.RemindAt.ToString("yyyy-MM-ddTHH:mm");
+    private string formattedRemindAt => RemindAt.ToString("yyyy-MM-ddTHH:mm");
 
     private Task HandleRemindAtChange(ChangeEventArgs e)
     {
         if (DateTime.TryParse(e.Value?.ToString(), out var parsed))
         {
-            Reminder.RemindAt = parsed;
+            RemindAt = parsed;
         }
         return Task.CompletedTask;
     }
 
     private async Task Submit()
     {
-        await ReminderService.CreateReminder(Reminder);
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst("nameid")?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return;
+        }
+
+        var dto = new StudyBuddy.Core.DTOs.ReminderDto
+            {
+                UserId = userId,
+                CustomMessage = CustomMessage,
+                RemindAt = RemindAt,
+                NotifyMinutesBefore = NotifyMinutesBefore,
+                TaskId = null 
+            };
+
+        await ReminderService.CreateReminderAsync(dto);
         await CloseModal();
     }
 
@@ -72,10 +87,9 @@
         IsOpen = false;
         await IsOpenChanged.InvokeAsync(false);
 
-        Reminder = new()
-            {
-                RemindAt = DateTime.Now.AddMinutes(30),
-                NotifyMinutesBefore = 60
-            };
+        // Reset form
+        CustomMessage = string.Empty;
+        RemindAt = DateTime.Now.AddMinutes(30);
+        NotifyMinutesBefore = 60;
     }
 }
