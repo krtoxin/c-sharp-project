@@ -209,7 +209,7 @@
 
         string callText = video ? "📹 started a video call" : "📞 started a voice call";
 
-        await connection!.InvokeAsync("SendMessage", RoomId, callText, null);
+        await connection!.InvokeAsync("SendMessage", RoomId, callText, null, CurrentUserId);
 
         await Task.Delay(300);
 
@@ -218,10 +218,22 @@
     }
 
 
-    private void EndCall()
+    private async Task EndCall()
     {
         showCallModal = false;
+        await JS.InvokeVoidAsync("stopMedia"); 
+
+        string endText = isVideoCall ? "📴 video call ended" : "📴 voice call ended";
+
+        if (connection?.State == HubConnectionState.Connected)
+        {
+            await connection.InvokeAsync("SendMessage", RoomId, endText, null, "system");
+
+        }
+
+        await JS.InvokeVoidAsync("stopMedia"); 
     }
+
 
     public void Dispose()
     {

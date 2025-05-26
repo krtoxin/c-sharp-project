@@ -21,7 +21,10 @@ namespace StudyBuddy.Core.Hubs
 
         public async Task SendMessage(int chatId, string message, int? taskId, string? senderOverride = null)
         {
-            string? senderId = senderOverride;
+            string? senderId = !string.IsNullOrWhiteSpace(senderOverride)
+                ? senderOverride
+                : Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? Context.User?.FindFirst("nameid")?.Value;
 
             if (string.IsNullOrWhiteSpace(senderId))
             {

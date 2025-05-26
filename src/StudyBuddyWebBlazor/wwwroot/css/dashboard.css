@@ -34,6 +34,7 @@
     box-shadow: 0 0 25px rgba(255, 0, 255, 0.1);
     transition: transform 0.25s ease;
     cursor: pointer;
+    color: #fff;
 }
 
     .dashboard-card:hover {
@@ -113,10 +114,7 @@ body.light-theme .dashboard-header p {
 }
 
 body.light-theme .dashboard-card {
-    border: none !important;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    color: #111;
 }
 
     body.light-theme .dashboard-card:hover {
@@ -129,13 +127,6 @@ body.light-theme .dashboard-card {
         color: #5865f2;
     }
 
-    body.light-theme .dashboard-card h3 {
-        color: #111;
-    }
-
-    body.light-theme .dashboard-card p {
-        color: #555;
-    }
 
 body.light-theme .form-input {
     background-color: #fff;
@@ -151,4 +142,8 @@ body.light-theme .form-input {
 body.light-theme select.form-input option {
     background-color: #fff;
     color: #000;
+}
+
+body.light-theme .layout-content .dashboard-card *{
+    color: #111;
 }

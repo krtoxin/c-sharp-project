@@ -122,3 +122,15 @@ window.toggleCamera = function (enabled) {
     });
     console.log("📷 Camera toggled:", enabled);
 };
+window.stopMedia = function () {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        console.log("🛑 Media stream stopped.");
+        localStream = null;
+    }
+    if (peer) {
+        peer.close();
+        console.log("🔌 Peer connection closed.");
+        peer = null;
+    }
+};

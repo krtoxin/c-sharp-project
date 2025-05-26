@@ -16,7 +16,7 @@
                 @(camOn ? "📷 Cam On" : "📷 Cam Off")
             </button>
 
-            <button class="btn btn-danger" @onclick="OnClose">End Call</button>
+            <button class="btn btn-danger" @onclick="EndCall">End Call</button>
         </div>
     </div>
 }
@@ -46,8 +46,8 @@
         if (shouldInit)
         {
             shouldInit = false;
-            await Task.Delay(200); // give the DOM time to render
-            await JS.InvokeVoidAsync("startCall", IsVideo);
+            await Task.Delay(200); 
+            await JS.InvokeVoidAsync("startMedia", IsVideo);
         }
     }
 
@@ -61,5 +61,10 @@
     {
         camOn = !camOn;
         await JS.InvokeVoidAsync("toggleCamera", camOn);
+    }
+    private async Task EndCall()
+    {
+        await JS.InvokeVoidAsync("stopMedia");      
+        await OnClose.InvokeAsync();                
     }
 }
