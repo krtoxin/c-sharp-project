@@ -74,22 +74,25 @@ namespace StudyBuddy.Services.Services
             if (user == null)
                 return ApiResult.Failure("User not found");
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+            try
+            {
+                await using var stream = file.OpenReadStream();
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
 
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
+                user.ProfileImageData = ms.ToArray();
+                user.ProfileImageMimeType = file.ContentType;
 
-            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
-            var filePath = Path.Combine(uploadsFolder, fileName);
+                await _userRepository.UpdateAsync(user);
 
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await file.OpenReadStream().CopyToAsync(stream);
-
-            user.ProfileImage = $"/avatars/{fileName}";
-            await _userRepository.UpdateAsync(user);
-
-            return ApiResult.Success();
+                return ApiResult.Success();
+            }
+            catch (Exception ex)
+            {
+                return ApiResult.Failure($"Failed to save avatar: {ex.Message}");
+            }
         }
+
 
         public async Task<User?> GetByIdAsync(string id)
         {

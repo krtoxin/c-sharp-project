@@ -123,16 +123,26 @@
         }
     }
 
-    private async void OnAvatarChange(InputFileChangeEventArgs e)
+    private async Task OnAvatarChange(InputFileChangeEventArgs e)
     {
         AvatarFile = e.File;
+
+        if (CurrentUser != null && AvatarFile != null)
+        {
+            var result = await UserService.SaveAvatarAsync(CurrentUser.Id, AvatarFile);
+            StatusMessage = result.IsSuccess ? "Avatar updated." : result.Errors.FirstOrDefault();
+            CurrentUser = await UserService.GetByIdAsync(CurrentUser.Id);
+            AvatarFile = null;
+        }
     }
+
 
     private string GetAvatarSource()
     {
-        if (!string.IsNullOrEmpty(CurrentUser?.ProfileImage))
+        if (CurrentUser?.ProfileImageData != null && !string.IsNullOrEmpty(CurrentUser.ProfileImageMimeType))
         {
-            return CurrentUser.ProfileImage.StartsWith("/") ? CurrentUser.ProfileImage : $"/avatars/{CurrentUser.ProfileImage}";
+            var base64 = Convert.ToBase64String(CurrentUser.ProfileImageData);
+            return $"data:{CurrentUser.ProfileImageMimeType};base64,{base64}";
         }
 
         return "/img/default-avatar.jpg";
