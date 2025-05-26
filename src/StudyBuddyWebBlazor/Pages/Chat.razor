@@ -47,7 +47,7 @@
                     </div>
                 </div>
 
-                @if (!IsGroupChat)
+                @if (!IsGroupChat && IsChatReady)
                 {
                     <div class="chat-actions-bubble">
                         <button class="circle-btn call" title="Voice Call" @onclick="() => StartCall(false)">
@@ -64,7 +64,9 @@
         <div class="chat-body" @ref="messagesDiv">
             @foreach (var msg in Messages)
             {
-                if (msg.SenderId == "system")
+                bool isCall = msg.Content?.Contains("started a video call") == true || msg.Content?.Contains("started a voice call") == true;
+
+                if (msg.SenderId == "system" || isCall)
                 {
                     <div class="system-message">
                         <span>@msg.Content</span>
@@ -171,12 +173,12 @@
         });
 
         await connection.StartAsync();
-        await JS.InvokeVoidAsync("storeSignalRConnection", connection); // Register in JS
         await connection.InvokeAsync("JoinChat", RoomId);
         await ScrollToBottom();
 
         IsChatReady = true;
     }
+
 
     private async Task SendMessage()
     {
@@ -200,27 +202,38 @@
 
     private async void StartCall(bool video)
     {
+        if (!IsChatReady || string.IsNullOrWhiteSpace(TargetUserId)) return;
+
         isVideoCall = video;
         showCallModal = true;
 
         string callText = video ? "📹 started a video call" : "📞 started a voice call";
 
-        await connection.InvokeAsync("SendMessage", RoomId, callText, null, CurrentUserId);
+        await connection!.InvokeAsync("SendMessage", RoomId, callText, null, CurrentUserId);
 
-        await Task.Delay(300); 
+        await Task.Delay(300);
 
-        if (!string.IsNullOrWhiteSpace(TargetUserId))
-        {
-            await JS.InvokeVoidAsync("eval", $"window.targetUserId = '{TargetUserId}'");
-            await JS.InvokeVoidAsync("startCall", RoomId, video);
-        }
+        await JS.InvokeVoidAsync("eval", $"window.targetUserId = '{TargetUserId}'");
+        await JS.InvokeVoidAsync("startMedia", video);  
     }
 
 
-    private void EndCall()
+    private async Task EndCall()
     {
         showCallModal = false;
+        await JS.InvokeVoidAsync("stopMedia"); 
+
+        string endText = isVideoCall ? "📴 video call ended" : "📴 voice call ended";
+
+        if (connection?.State == HubConnectionState.Connected)
+        {
+            await connection.InvokeAsync("SendMessage", RoomId, endText, null, "system");
+
+        }
+
+        await JS.InvokeVoidAsync("stopMedia"); 
     }
+
 
     public void Dispose()
     {

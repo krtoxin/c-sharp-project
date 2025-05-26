@@ -21,7 +21,10 @@ namespace StudyBuddy.Core.Hubs
 
         public async Task SendMessage(int chatId, string message, int? taskId, string? senderOverride = null)
         {
-            string? senderId = senderOverride;
+            string? senderId = !string.IsNullOrWhiteSpace(senderOverride)
+                ? senderOverride
+                : Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? Context.User?.FindFirst("nameid")?.Value;
 
             if (string.IsNullOrWhiteSpace(senderId))
             {
@@ -107,7 +110,11 @@ namespace StudyBuddy.Core.Hubs
 
         public async Task SendSignal(int chatId, string targetUserId, string type, string data)
         {
-            await Clients.User(targetUserId).SendAsync("ReceiveSignal", chatId, Context.UserIdentifier, type, data);
+            string? senderId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? Context.User?.FindFirst("nameid")?.Value
+                            ?? "unknown";
+
+            await Clients.User(targetUserId).SendAsync("ReceiveSignal", chatId, senderId, type, data);
         }
 
     }
