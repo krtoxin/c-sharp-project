@@ -1,0 +1,81 @@
+﻿@inject ReminderService ReminderService
+
+@if (IsOpen)
+{
+    <div class="reminder-modal-overlay">
+        <div class="reminder-modal position-relative">
+            <button type="button" class="reminder-close" @onclick="CloseModal" aria-label="Close">
+                <span>&times;</span>
+            </button>
+
+            <h5 class="mb-4">Add Reminder</h5>
+
+            <div>
+                <label>Custom Message</label>
+                <input @bind="Reminder.CustomMessage" placeholder="E.g. Study math!" />
+            </div>
+
+            <div>
+                <label>Remind At</label>
+                <input type="datetime-local"
+                       value="@formattedRemindAt"
+                       @onchange="HandleRemindAtChange" />
+            </div>
+
+            <div>
+                <label>Notify Before</label>
+                <select @bind="Reminder.NotifyMinutesBefore">
+                    <option value="5">5 minutes</option>
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-primary" @onclick="Submit">Save</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private Reminder Reminder = new()
+        {
+            RemindAt = DateTime.Now.AddMinutes(30),
+            NotifyMinutesBefore = 60
+        };
+
+    private string formattedRemindAt =>
+        Reminder.RemindAt.ToString("yyyy-MM-ddTHH:mm");
+
+    private Task HandleRemindAtChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var parsed))
+        {
+            Reminder.RemindAt = parsed;
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task Submit()
+    {
+        await ReminderService.CreateReminder(Reminder);
+        await CloseModal();
+    }
+
+    private async Task CloseModal()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+
+        Reminder = new()
+            {
+                RemindAt = DateTime.Now.AddMinutes(30),
+                NotifyMinutesBefore = 60
+            };
+    }
+}

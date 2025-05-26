@@ -1,11 +1,16 @@
 ﻿@inject AuthenticationStateProvider AuthProvider
 @using System.Security.Claims
+@using StudyBuddy.Core.Entities
+@using StudyBuddyWebBlazor.Components.Forms
 
 @inherits LayoutComponentBase
 
 @code {
     private ClaimsPrincipal? user;
     private string? role;
+
+    private bool showReminderModal = false;
+    private bool showNotificationsDropdown = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -15,11 +20,22 @@
     }
 
     private bool IsInRole(string roleName) => role == roleName;
+
+    private void OpenReminderModal() => showReminderModal = true;
+    private void OnReminderModalChanged(bool value) => showReminderModal = value;
+
+    private void ToggleNotifications() => showNotificationsDropdown = !showNotificationsDropdown;
+
+    [JSInvokable]
+    public void CloseDropdowns()
+    {
+        showNotificationsDropdown = false;
+    }
 }
 
 @if (user?.Identity?.IsAuthenticated ?? false)
 {
-    <div class="layout-wrapper">
+    <div class="layout-wrapper" @onclick="() => showNotificationsDropdown = false">
         <aside class="sidebar">
             <img src="img/studylogo.svg" alt="StudyBuddy Logo" class="sidebar-logo" />
             <nav class="nav-links">
@@ -30,10 +46,8 @@
                     <i class="bi bi-shield-lock"></i> Rules
                 </a>
 
-
                 @if (IsInRole("Manager") || IsInRole("Admin"))
                 {
-                    
                     <NavLink href="/subjects" class="nav-link" activeClass="active">
                         <i class="bi bi-journal-bookmark"></i> Subjects
                     </NavLink>
@@ -73,15 +87,24 @@
         </aside>
 
         <div class="layout-content">
+            <QuickAddReminder IsOpen="@showReminderModal" IsOpenChanged="OnReminderModalChanged" />
+            <NotificationDropdown IsOpen="@showNotificationsDropdown" />
+
             <header class="topbar">
                 <div class="topbar-right">
-                    <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
-                    <button class="icon-btn" title="Calendar"><i class="bi bi-calendar3"></i></button>
+                    <button class="icon-btn" title="Notifications" @onclick:stopPropagation="true" @onclick="ToggleNotifications">
+                        <i class="bi bi-bell"></i>
+                    </button>
+
+                    <button class="icon-btn" title="Reminders" @onclick="OpenReminderModal">
+                        <i class="bi bi-calendar3"></i>
+                    </button>
+
                     <button class="icon-btn" title="What's New"><i class="bi bi-lightbulb"></i></button>
+
                     <NavLink href="/profile" class="profile-menu" title="Profile">
                         <i class="bi bi-person-circle" style="font-size: 1.5rem; color: pink;"></i>
                     </NavLink>
-
                 </div>
             </header>
 

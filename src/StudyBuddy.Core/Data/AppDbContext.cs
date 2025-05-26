@@ -17,6 +17,7 @@ namespace StudyBuddy.Core.Data
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<TaskAttempt> TaskAttempts { get; set; } = null!;
+        public DbSet<Reminder> Reminders { get; set; } = null!;
 
 
 

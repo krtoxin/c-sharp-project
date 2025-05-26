@@ -111,6 +111,12 @@ builder.Services.AddHttpClient<ApiUserService>(client =>
     client.BaseAddress = new Uri("https://localhost:7295/"); 
 });
 
+builder.Services.AddHttpClient<ReminderService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7295/");
+});
+
+
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 builder.Services.AddAuthorization();

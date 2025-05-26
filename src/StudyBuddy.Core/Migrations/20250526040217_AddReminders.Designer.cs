@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudyBuddy.Core.Data;
@@ -11,9 +12,11 @@ using StudyBuddy.Core.Data;
 namespace StudyBuddy.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250526040217_AddReminders")]
+    partial class AddReminders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,7 +167,41 @@ namespace StudyBuddy.Core.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-           
+            modelBuilder.Entity("StudyBuddy.Core.Entities.Reminder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CustomMessage")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("NotifyMinutesBefore")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("RemindAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reminders");
+                });
 
             modelBuilder.Entity("StudyBuddy.Core.Entities.Role", b =>
                 {
@@ -360,10 +397,7 @@ namespace StudyBuddy.Core.Migrations
                     b.Property<DateTime?>("PremiumUntil")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<byte[]>("ProfileImageData")
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("ProfileImageMimeType")
+                    b.Property<string>("ProfileImage")
                         .HasColumnType("text");
 
                     b.Property<int>("RoleId")

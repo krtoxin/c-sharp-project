@@ -1,0 +1,141 @@
+﻿.reminder-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reminder-modal {
+    background: #1b0e2e;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 450px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    animation: popIn 0.3s ease-out;
+    color: #fff;
+}
+
+    .reminder-modal h5 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #f0e6ff;
+    }
+
+    .reminder-modal .btn-close {
+        background-color: #ffb3c6;
+        border: none;
+        border-radius: 50%;
+        padding: 0.4rem 0.6rem;
+        font-size: 1rem;
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+        color: #000;
+    }
+
+    .reminder-modal label {
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        color: #ddd;
+    }
+
+    .reminder-modal input,
+    .reminder-modal select {
+        background: #3a245d;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem;
+        width: 100%;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .reminder-modal .btn-primary {
+        background: linear-gradient(90deg, #da22ff, #9733ee);
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 12px;
+        font-weight: bold;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .reminder-modal .btn-primary:hover {
+            filter: brightness(1.1);
+        }
+
+@keyframes popIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.reminder-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: #ff88a6;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2b0f1f;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+    .reminder-close:hover {
+        background-color: #ff6c91;
+        transform: scale(1.05);
+    }
+
+
+.notification-dropdown {
+    position: absolute;
+    top: 3rem;
+    right: 1rem;
+    width: 300px;
+    background: #1b0e2e;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    z-index: 1100;
+    color: #fff;
+}
+
+    .notification-dropdown h6 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+        color: #f0e6ff;
+    }
+
+.notification-item {
+    background: #2b1744;
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+    .notification-item:hover {
+        background: #3d2363;
+        cursor: pointer;
+    }

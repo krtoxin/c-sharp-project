@@ -184,7 +184,7 @@
     {
         if (connection?.State != HubConnectionState.Connected || string.IsNullOrWhiteSpace(NewMessage)) return;
 
-        await connection.InvokeAsync("SendMessage", RoomId, NewMessage, null);
+        await connection.InvokeAsync("SendMessage", RoomId, NewMessage, null, CurrentUserId);
         NewMessage = "";
         await ScrollToBottom();
     }

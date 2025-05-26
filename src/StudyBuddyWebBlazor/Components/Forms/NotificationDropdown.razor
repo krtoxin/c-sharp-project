@@ -1,0 +1,46 @@
+﻿@inject ReminderService ReminderService
+@using StudyBuddy.Core.Entities
+
+@if (IsOpen)
+{
+    <div class="notification-dropdown" @onclick:stopPropagation="true">
+        <h6>Reminders</h6>
+
+        @if (Notifications.Any())
+        {
+            @foreach (var note in Notifications)
+            {
+                <div class="notification-item">
+                    <div>
+                        <strong>@(note.CustomMessage ?? "Reminder!")</strong><br />
+                        <small>@note.RemindAt.ToLocalTime().ToString("g")</small>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="notification-item">
+                <em>No new notifications</em>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+
+    private List<Reminder> Notifications = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen)
+        {
+            Notifications = (await ReminderService.GetUpcomingReminders() ?? new List<Reminder>())
+                .Where(r => r.RemindAt <= DateTime.Now && !r.IsSent)
+                .OrderByDescending(r => r.RemindAt)
+                .Take(5)
+                .ToList();
+        }
+    }
+}
