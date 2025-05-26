@@ -7,8 +7,10 @@
         public string Email { get; set; } = null!;
         public string PasswordHash { get; set; } = null!;
         public string FullName { get; set; } = null!;
-        public string? DisplayName { get; set; } 
-        public string? ProfileImage { get; set; }
+        public string? DisplayName { get; set; }
+        public byte[]? ProfileImageData { get; set; }
+        public string? ProfileImageMimeType { get; set; }
+
         public bool IsPremiumUser { get; set; } = false;
         public DateTime? PremiumUntil { get; set; } 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
